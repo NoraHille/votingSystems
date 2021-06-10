@@ -9,9 +9,12 @@ import random
 
 
 # Todo:
-# - round table values
 # - show absolute as well as relative values
 # - investigate different approval voting scores
+# - color landscape plot according to plurality score
+# - Weighted Linear Approval ranking
+# - Simulate strategic voting -> Come up with a score
+# - Testing! You need to be CERTAIN everything is right!
 
 class Issue(object):
     def __init__(self, options, dimensions):
@@ -130,6 +133,7 @@ class Election:
         result_list.append(self.computeResultWR())
         result_list.append(self.computeResultWLR())
         result_list.append(self.computeResultWAR())
+        result_list.append(self.computeResultWAR(linear=True))
 
 
 
@@ -176,7 +180,9 @@ class Election:
         fig, ax = plt.subplots(1, 1)
         for res in result_list:
             column_labels.append(res.kind_of_eval)
+            # data.append([round(num, 3) for num in list(res.ranking.values())])
             data.append([round(num, 3) for num in list(res.normalizedRanking.values())])
+        #     data.append([round(abs, 3) + "(" + round(rel, 3) + ")" for num, rel in zip(list(res.ranking.values()), list(res.normalizedRanking.values()))])
         data = np.array(data).T.tolist()
         print(data)
         df = pd.DataFrame(data, columns=column_labels)
@@ -185,9 +191,12 @@ class Election:
         print(list(result_list[0].ranking.keys()))
         tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=list(result_list[0].ranking.keys()), loc="center")
         tab.set_fontsize(40)
-        # tab.scale(1.5, 1.5)
+
+        #merging time
 
 
+
+        # highlight winners
         for i, res in enumerate(result_list):
             print("new res ", i)
 
@@ -240,25 +249,30 @@ class Election:
 
         return ElectionResult(common_lin_PM, "Weighted Linear Ranking")
 
-    def computeResultWAR(self):  # Weighted Approval Ranking
+    def computeResultWAR(self, linear= FALSE ):  # Weighted Approval Ranking
        # print("results of weighted ranking: ")
+        name = "Weighted Approval Ranking"
+        if(linear):
+            name = "Wei.App.Lin. Ranking"
         common_PM = {}
         for op in self.issue.options:
             common_PM[op.name] = 0
             for ag in self.agents:
                 #scale the agents pm so that the highes option is set to exactly 1:
                 highesScore = 0
-                for (option, score) in ag.pm.items():
+                items = ag.pm.items()
+                if(linear):
+                    items = ag.linearPM.items()
+                for (option, score) in items:
                     if(score > highesScore):
                         highesScore = score
                 common_PM[op.name] += (ag.pm[op.name] * 1/highesScore)
 
-        #  print("added up PM: ")
 
-        return ElectionResult(common_PM, "Weighted Approval Ranking")
+        return ElectionResult(common_PM, name)
 
 
-    def computeResultPlurality(self):
+    def computeResultPlurality(self): #Plurality
         voteScore = {}
         for op in self.issue.options:
             voteScore[op.name] = 0
@@ -422,10 +436,10 @@ def getCenterPointAgents(centerPoints, numAgents, numDimensions, issue):
     return agents
 
 def initializeRandomElection(numOptions, numAgents, numDimensions):
-    initializeElection(numOptions, numAgents, numDimensions)
+    return initializeElection(numOptions, numAgents, numDimensions)
 
 
-def initializeElection(numOptions, numAgents, numDimensions, centerPoints= NONE): #CenterPoints is a list of tuples with likelihoods and points (points are also tuple)
+def initializeElection(numOptions, numAgents, numDimensions, centerPoints= None): #CenterPoints is a list of tuples with likelihoods and points (points are also tuple)
     options = []
     for i in range(numOptions):
         op = Option(makeRandomCoordinates(numDimensions))
@@ -434,9 +448,8 @@ def initializeElection(numOptions, numAgents, numDimensions, centerPoints= NONE)
     for i in range(numDimensions):
         dimensions.append("dim" + 'i')
     issue = Issue(options, dimensions)
-    agents = []
 
-    if(centerPoints):
+    if(centerPoints != None):
         agents = getCenterPointAgents(centerPoints, numAgents, numDimensions, issue)
 
     else:

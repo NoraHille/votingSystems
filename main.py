@@ -16,10 +16,10 @@ from classes import Option, Issue, Agent, Election, initializeRandomElection, in
 
 def print_hi(name):
 
-    election = initializeElection(5, 100, 2, centerPoints=[(0.4, (5,5)), (0.3, (-30,-90)), (0.2, (-60,90)), (0.1, (80, -25))])
+    # election = initializeElection(5, 100, 2, centerPoints=[(0.4, (5,5)), (0.3, (-30,-90)), (0.2, (-60,90)), (0.1, (80, -25))])
+    election = initializeRandomElection(5, 100, 2)
     election.print_result_table()
     election.print_election_plot()
-
 
 
 
