@@ -17,11 +17,17 @@ from classes import Option, Issue, Agent, Election, initializeRandomElection, in
 def print_hi(name):
 
     # election = initializeElection(5, 100, 2, centerPoints=[(0.4, (5,5)), (0.3, (-30,-90)), (0.2, (-60,90)), (0.1, (80, -25))])
-    # # election = initializeRandomElection(5, 10, 2)
+    election = initializeRandomElection(5, 50, 2)
     # election.print_result_table()
-    # election.print_election_plot()
+    # election.print_election_plot(colorWeighted=True, linear=False)
 
-    generateStrategicVoting(kind="WAR", numOptions=5, numAgents=2)
+    election.make_result_graphic()
+
+
+    # for kind in ["WR", "WAR", "AV", "RC", "PL", "WLR", "WALR"]:
+    # for kind in ["WALR"]:
+    #     generateStrategicVoting(kind=kind, numOptions=5, numAgents=2, iter=10000)
+
 
 
 
@@ -38,6 +44,7 @@ def print_hi(name):
 #
 #     # election = initializeRandomElection(5,100,3)
 #     election = Election(issue1, [ag1, ag2])
+#     election.print_election_plot(colorWeighted=True)
 #     el_result = election.computeResultPlurality()
 #     el_result.printResults()
 
