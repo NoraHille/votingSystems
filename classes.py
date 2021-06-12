@@ -6,6 +6,7 @@ import pandas as pd
 import math
 import string
 import random
+import copy
 
 
 # Todo:
@@ -144,7 +145,7 @@ class Election:
 
         return result_list
 
-    def print_election_plot(self, show=True):
+    def print_election_plot(self, show=True, highlightAgent= None):
 
 
         if(len(self.issue.dimensions) != 2):
@@ -170,6 +171,11 @@ class Election:
             ag_y.append(ag.coordinates[1])
 
         plt.scatter(ag_x, ag_y)
+
+        if(highlightAgent != None):
+            x = self.agents[highlightAgent].coordinates[0]
+            y = self.agents[highlightAgent].coordinates[1]
+            plt.scatter(x, y, color="darkblue")
 
         for i, txt in enumerate(op_names):
             plt.annotate(txt, (op_x[i], op_y[i]))
@@ -485,6 +491,7 @@ def generateStrategicVoting(kind="WR", numOptions=5, numAgents=10):
     highestDifference = 0
     cutOffValue = 0.5
     rounds = 0
+    plotNum = 0
     while(True):
         election = initializeRandomElection(numOptions, numAgents, 2)
 
@@ -519,57 +526,96 @@ def generateStrategicVoting(kind="WR", numOptions=5, numAgents=10):
             happinessIncrease = newHappiness - initialHappiness
 
             if(happinessIncrease>highestDifference):
+
+                print("PLOT NR ", plotNum )
+                plotNum += 1
                 highestDifference = happinessIncrease
 
+                bestResult = copy.deepcopy(result)
+                bestInitialCoordinates = initialCoordinates
+                bestInitialPM = initialPM
+                bestNewResult = copy.deepcopy(newResult)
+                bestNewPM = newPM
+                bestInitialHappiness = initialHappiness
+                bestNewHappiness = newHappiness
+                bestElection = copy.deepcopy(election)
+                bestStrategicAgentID = election.agents.index(strategicAgent)
+                bestWinOp = winningOption
+                bestPrefOp = preferredOption
 
 
 
-                data = []
-
-                result.printResults()
-                print("Agent has this initial PM", initialPM)
-                data.append([round(num, 3) for num in list(initialPM.values())])
-                data.append([round(num, 3) for num in list(result.normalizedRanking.values())])
-                print(initialCoordinates, " -> ", strategicAgent.coordinates)
-                newResult.printResults()
-                print("Agent has this new PM", newPM)
-                data.append([round(num, 3) for num in list(newPM.values())])
-                data.append([round(num, 3) for num in list(newResult.normalizedRanking.values())])
-                print("The happiness increased by ", happinessIncrease, "from ", initialHappiness, "to ", newHappiness)
-                plt.subplot(2, 2, 2)  # row 1, col 2 index 2
 
 
 
-                election.print_election_plot(show=False)
-                # ax1.set_aspect('equal')
-                strategicAgent.setCoordinates(initialCoordinates)
-                plt.subplot(2, 2, 1)  # index 1
 
+                # data = []
+                #
+                # result.printResults()
+                # print("Agent has this initial PM", initialPM)
+                # data.append([round(num, 3) for num in list(initialPM.values())])
+                # data.append([round(num, 3) for num in list(result.normalizedRanking.values())])
+                # print(initialCoordinates, " -> ", strategicAgent.coordinates)
+                # newResult.printResults()
+                # print("Agent has this new PM", newPM)
+                # data.append([round(num, 3) for num in list(newPM.values())])
+                # data.append([round(num, 3) for num in list(newResult.normalizedRanking.values())])
+                # print("The happiness increased by ", happinessIncrease, "from ", initialHappiness, "to ", newHappiness)
+                # plt.subplot(2, 2, 2)  # row 1, col 2 index 2
+                #
+                #
+                #
+                # election.print_election_plot(show=False, highlightAgent=election.agents.index(strategicAgent))
+                # # ax1.set_aspect('equal')
+                # strategicAgent.setCoordinates(initialCoordinates)
+                # plt.subplot(2, 2, 1)  # index 1
+                #
+                #
+                # if(kind == "WR"):
+                #     plt.title("Strategic Voting with Weighted Ranking", fontsize= 11)
+                # if (kind == "WAR"):
+                #     plt.title("Strategic Voting with Weighted Approval Ranking", fontsize= 11)
+                #
+                # election.print_election_plot(show=False, highlightAgent=election.agents.index(strategicAgent))
+                # # ax2.set_aspect('equal')
+                #
+                # ax = plt.subplot(2, 1, 2, visible= True)  # index 3
+                #
+                # column_labels = ["Agents Pref", "Result", "Agents Vote", "Result"]
+                #
+                #
+                # data = np.array(data).T.tolist()
+                # print(data, "DATA")
+                # df = pd.DataFrame(data, columns=column_labels)
+                #
+                # ax.axis('tight')
+                # ax.axis('off')
+                # tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=list(result.ranking.keys()),
+                #                loc="center")
+                #
+                #
+                # # Let's add some nice colors!
+                #
+                # for i in range(4):
+                #
+                #
+                #     pref_cell = tab[optionsByName.index(preferredOption)+1, i]
+                #     if(i<2): # we only need this for the first two cols
+                #         win_cell = tab[optionsByName.index(winningOption)+1, i]
+                #         win_cell.set_facecolor('red')
+                #         ax.add_patch(win_cell)
+                #     pref_cell.set_facecolor('palegreen')
+                #     ax.add_patch(pref_cell)
+                #
+                # plt.savefig("strat{}.png".format(kind), dpi=300)
+                #
+                #
+                #
+                #
 
-                if(kind == "WR"):
-                    plt.title("Strategic Voting with Weighted Ranking", fontsize= 12)
-                if (kind == "WAR"):
-                    plt.title("Strategic Voting with Weighted Approval Ranking", fontsize= 12)
+                # plt.show()
 
-                election.print_election_plot(show=False)
-                # ax2.set_aspect('equal')
-
-                ax = plt.subplot(2, 1, 2, visible= True)  # index 3
-
-                column_labels = ["Agents Pref", "Result", "Agents Vote", "Result"]
-
-
-                data = np.array(data).T.tolist()
-                print(data, "DATA")
-                df = pd.DataFrame(data, columns=column_labels)
-
-                ax.axis('tight')
-                ax.axis('off')
-                tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=list(result.ranking.keys()),
-                               loc="center")
-                # plt.subplot(2, 2, 4, visible= False)  # index 4
-
-                plt.show()
+                print("Doooooblydoo", election.agents.index(strategicAgent))
 
                 print("________________________________________________________________________________________________ \n \n")
                 if(highestDifference>cutOffValue):
@@ -582,8 +628,69 @@ def generateStrategicVoting(kind="WR", numOptions=5, numAgents=10):
 
 
 
-
+    makeStratVotingPlot(kind, bestResult, bestNewResult, bestInitialPM, bestNewPM, bestInitialCoordinates,  bestStrategicAgentID, bestInitialHappiness, bestNewHappiness, bestElection, bestWinOp, bestPrefOp, optionsByName)
     print("Best increase was", highestDifference)
 
 
 
+def makeStratVotingPlot(kind, result, newResult, initialPM, newPM, initialCoordinates, strategicAgentID, initialHappiness, newHappiness, election, winningOption, preferredOption, optionsByName):
+    data = []
+
+
+    strategicAgent = election.agents[strategicAgentID]
+
+    result.printResults()
+    print("Agent has this initial PM", initialPM)
+    data.append([round(num, 3) for num in list(initialPM.values())])
+    data.append([round(num, 3) for num in list(result.normalizedRanking.values())])
+    print(initialCoordinates, " -> ", strategicAgent.coordinates)
+    newResult.printResults()
+    print("Agent has this new PM", newPM)
+    data.append([round(num, 3) for num in list(newPM.values())])
+    data.append([round(num, 3) for num in list(newResult.normalizedRanking.values())])
+    # print("The happiness increased by ", happinessIncrease, "from ", initialHappiness, "to ", newHappiness)
+    plt.subplot(2, 2, 2)  # row 1, col 2 index 2
+
+    election.print_election_plot(show=False, highlightAgent=election.agents.index(strategicAgent))
+    # ax1.set_aspect('equal')
+    strategicAgent.setCoordinates(initialCoordinates)
+    plt.subplot(2, 2, 1)  # index 1
+
+    if (kind == "WR"):
+        plt.title("Strategic Voting with Weighted Ranking", fontsize=11)
+    if (kind == "WAR"):
+        plt.title("Strategic Voting with Weighted Approval Ranking", fontsize=11)
+
+    election.print_election_plot(show=False, highlightAgent=election.agents.index(strategicAgent))
+    # ax2.set_aspect('equal')
+
+    ax = plt.subplot(2, 1, 2, visible=True)  # index 3
+
+    column_labels = ["Agents Pref", "Result", "Agents Vote", "Result"]
+
+    data = np.array(data).T.tolist()
+    print(data, "DATA")
+    df = pd.DataFrame(data, columns=column_labels)
+
+    ax.axis('tight')
+    ax.axis('off')
+    tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=list(result.ranking.keys()),
+                   loc="center")
+
+    # Let's add some nice colors!
+
+    for i in range(4):
+
+        pref_cell = tab[optionsByName.index(preferredOption) + 1, i]
+        if (i < 2):  # we only need this for the first two cols
+            win_cell = tab[optionsByName.index(winningOption) + 1, i]
+            win_cell.set_facecolor('red')
+            ax.add_patch(win_cell)
+        pref_cell.set_facecolor('palegreen')
+        ax.add_patch(pref_cell)
+
+    plt.savefig("strat{}.png".format(kind), dpi=300)
+
+    plt.show()
+
+    print("________________________________________________________________________________________________ \n \n")
