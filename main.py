@@ -10,16 +10,18 @@ import math
 import string
 import random
 import pandas as pd
-from classes import Option, Issue, Agent, Election, initializeRandomElection, initializeElection
+from classes import Option, Issue, Agent, Election, initializeRandomElection, initializeElection, generateStrategicVoting
 
 
 
 def print_hi(name):
 
     # election = initializeElection(5, 100, 2, centerPoints=[(0.4, (5,5)), (0.3, (-30,-90)), (0.2, (-60,90)), (0.1, (80, -25))])
-    election = initializeRandomElection(5, 100, 2)
-    election.print_result_table()
-    election.print_election_plot()
+    # election = initializeRandomElection(5, 10, 2)
+    # election.print_result_table()
+    # election.print_election_plot()
+
+    generateStrategicVoting(kind="WAR", numOptions=5, numAgents=2)
 
 
 

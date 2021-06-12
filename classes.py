@@ -12,7 +12,6 @@ import random
 # - show absolute as well as relative values
 # - investigate different approval voting scores
 # - color landscape plot according to plurality score
-# - Weighted Linear Approval ranking
 # - Simulate strategic voting -> Come up with a score
 # - Testing! You need to be CERTAIN everything is right!
 
@@ -37,9 +36,15 @@ class Option(object):
 
 class Agent(object):
     def __init__(self, coordinates, issue):
-        self.coordinates = coordinates #coordinates is a list of real numbers, each number being associated with a dimension in the issue
-        self.pm = self.create_PM(issue)
-        self.linearPM = self.create_linear_PM(issue)
+        self.issue = issue
+        self.setCoordinates(coordinates)
+
+
+    def setCoordinates(self, coordinates):
+        self.coordinates = coordinates  # coordinates is a list of real numbers, each number being associated with a dimension in the issue
+        self.pm = self.create_PM(self.issue)
+        self.linearPM = self.create_linear_PM(self.issue)
+
     def create_PM(self, issue):
         pm = {}
         normalization_faktor = 0;
@@ -139,20 +144,14 @@ class Election:
 
         return result_list
 
-    def print_election_plot(self):
+    def print_election_plot(self, show=True):
 
 
         if(len(self.issue.dimensions) != 2):
             print("You tried to plot an election with more/less than 2 dimensions, namely ",len(self.issue.dimensions) )
             return
 
-        ag_x = []
-        ag_y = []
-        for ag in self.agents:
-            ag_x.append(ag.coordinates[0])
-            ag_y.append(ag.coordinates[1])
 
-        plt.scatter(ag_x,ag_y)
 
         op_x = []
         op_y = []
@@ -164,9 +163,24 @@ class Election:
 
         plt.scatter(op_x, op_y, color="red")
 
+        ag_x = []
+        ag_y = []
+        for ag in self.agents:
+            ag_x.append(ag.coordinates[0])
+            ag_y.append(ag.coordinates[1])
+
+        plt.scatter(ag_x, ag_y)
+
         for i, txt in enumerate(op_names):
             plt.annotate(txt, (op_x[i], op_y[i]))
-        plt.show()
+
+        plt.xlim([-100, 100])
+        plt.ylim([-100, 100])
+
+
+        if(show):
+            plt.show()
+
 
     def print_result_table(self, rounded= True):
 
@@ -465,3 +479,111 @@ def printDict(text, dict):
     print(text)
     for key, value in dict.items():
         print(key, ' : ', value)
+
+
+def generateStrategicVoting(kind="WR", numOptions=5, numAgents=10):
+    highestDifference = 0
+    cutOffValue = 0.5
+    rounds = 0
+    while(True):
+        election = initializeRandomElection(numOptions, numAgents, 2)
+
+        for ag in election.agents:
+
+            if(kind == "WR"):
+                result = election.computeResultWR()
+            if(kind == "WAR"):
+                result = election.computeResultWAR()
+            strategicAgent = ag
+            initialCoordinates = strategicAgent.coordinates
+            initialPM = strategicAgent.pm
+            preferredOption = Helper.getWinner(strategicAgent.pm)[0]
+            winningOption =  Helper.getWinner(result.normalizedRanking)[0]
+            if(preferredOption == winningOption):
+                break
+            initialHappiness = result.normalizedRanking[preferredOption]
+
+
+            optionsByName = [op.name for op in election.issue.options]
+            newCoordinates = election.issue.options[optionsByName.index(preferredOption)].coordinates
+            strategicAgent.setCoordinates(newCoordinates)
+            newPM = strategicAgent.pm
+
+            if (kind == "WR"):
+                newResult = election.computeResultWR()
+            if (kind == "WAR"):
+                newResult = election.computeResultWAR()
+
+
+            newHappiness = newResult.normalizedRanking[preferredOption]
+            happinessIncrease = newHappiness - initialHappiness
+
+            if(happinessIncrease>highestDifference):
+                highestDifference = happinessIncrease
+
+
+
+
+                data = []
+
+                result.printResults()
+                print("Agent has this initial PM", initialPM)
+                data.append([round(num, 3) for num in list(initialPM.values())])
+                data.append([round(num, 3) for num in list(result.normalizedRanking.values())])
+                print(initialCoordinates, " -> ", strategicAgent.coordinates)
+                newResult.printResults()
+                print("Agent has this new PM", newPM)
+                data.append([round(num, 3) for num in list(newPM.values())])
+                data.append([round(num, 3) for num in list(newResult.normalizedRanking.values())])
+                print("The happiness increased by ", happinessIncrease, "from ", initialHappiness, "to ", newHappiness)
+                plt.subplot(2, 2, 2)  # row 1, col 2 index 2
+
+
+
+                election.print_election_plot(show=False)
+                # ax1.set_aspect('equal')
+                strategicAgent.setCoordinates(initialCoordinates)
+                plt.subplot(2, 2, 1)  # index 1
+
+
+                if(kind == "WR"):
+                    plt.title("Strategic Voting with Weighted Ranking", fontsize= 12)
+                if (kind == "WAR"):
+                    plt.title("Strategic Voting with Weighted Approval Ranking", fontsize= 12)
+
+                election.print_election_plot(show=False)
+                # ax2.set_aspect('equal')
+
+                ax = plt.subplot(2, 1, 2, visible= True)  # index 3
+
+                column_labels = ["Agents Pref", "Result", "Agents Vote", "Result"]
+
+
+                data = np.array(data).T.tolist()
+                print(data, "DATA")
+                df = pd.DataFrame(data, columns=column_labels)
+
+                ax.axis('tight')
+                ax.axis('off')
+                tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=list(result.ranking.keys()),
+                               loc="center")
+                # plt.subplot(2, 2, 4, visible= False)  # index 4
+
+                plt.show()
+
+                print("________________________________________________________________________________________________ \n \n")
+                if(highestDifference>cutOffValue):
+                    break
+            strategicAgent.setCoordinates(initialCoordinates)
+        rounds +=1
+        if(rounds > 1000):
+            print("Breaking now, rounds are up")
+            break
+
+
+
+
+    print("Best increase was", highestDifference)
+
+
+
