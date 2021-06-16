@@ -119,10 +119,11 @@ def common_PM(args):
 
 
 class ElectionResult(object):
-    def __init__(self, ranking, kind_of_eval):
+    def __init__(self, ranking, kind_of_eval, short_kind_of_eval):
         self.ranking = ranking
         self.normalizedRanking = Helper.normalizeDict(ranking)
         self.kind_of_eval = kind_of_eval
+        self.short_kind_of_eval = short_kind_of_eval
 
     def printResults(self):
         print("Using {} the winning option is {} and these are the normalized results {}. Absolute results: {}".format(
@@ -268,6 +269,36 @@ class Election:
         if (show):
             plt.show()
 
+    def print_elec_table(self):
+
+
+        if(len(self.agents) > 5):
+            print("Too many agents to fit into table")
+            return
+
+        column_labels = []
+        data = []
+        _, ax = plt.subplots(1, 1)
+        for i, ag in enumerate(self.agents):
+            column_labels.append("ag" + str(i))
+            data.append([round(num, 3) for num in list(ag.pm.values())])
+        data = np.array(data).T.tolist()
+        df = pd.DataFrame(data, columns=column_labels)
+        ax.axis('tight')
+        ax.axis('off')
+        tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=list(self.agents[0].pm.keys()),
+                       loc="center")
+        tab.auto_set_font_size(False)
+        tab.set_fontsize(6)
+        tab.scale(1.1, 1)
+
+        plt.savefig("elecTable.png", dpi=300)
+
+
+
+
+
+
     def print_result_table(self, rounded=True, show=True, ax=None):
 
         result_list = self.computeAllResults()
@@ -275,12 +306,13 @@ class Election:
         column_labels = []
         data = []
 
-        # plt.figure(dpi=2000)
+
+
 
         if(ax == None):
             _, ax = plt.subplots(1, 1)
         for res in result_list:
-            column_labels.append(res.kind_of_eval)
+            column_labels.append(res.short_kind_of_eval)
             # data.append([round(num, 3) for num in list(res.ranking.values())])
             data.append([round(num, 3) for num in list(res.normalizedRanking.values())])
         #     data.append([round(abs, 3) + "(" + round(rel, 3) + ")" for num, rel in zip(list(res.ranking.values()), list(res.normalizedRanking.values()))])
@@ -326,10 +358,12 @@ class Election:
 
         plt.savefig("table.png", dpi=300)
 
+        if (show):
+            plt.show()
+
         return ax
 
-        if(show):
-            plt.show()
+
 
     def make_result_graphic(self):
 
@@ -372,7 +406,7 @@ class Election:
             for ag in self.agents:
                 common_PM[op.name] += ag.pm[op.name]
 
-        return ElectionResult(common_PM, "Weighted")
+        return ElectionResult(common_PM, "Weighted Ranking", "WR")
 
     def computeResultWLR(self):  # Weighted Linear Ranking
         common_lin_PM = {}
@@ -381,13 +415,15 @@ class Election:
             for ag in self.agents:
                 common_lin_PM[op.name] += ag.linearPM[op.name]
 
-        return ElectionResult(common_lin_PM, "Weighted lin. ")
+        return ElectionResult(common_lin_PM, "Weighted Linear Ranking", "WLR")
 
     def computeResultWAR(self, linear=FALSE):  # Weighted Approval Ranking
         # print("results of weighted ranking: ")
-        name = "Weighted App"
+        name = "Weighted Appoval Ranking"
+        shortName = "WAV"
         if (linear):
-            name = "WAL"
+            name = "Weighted Approval Linear Ranking"
+            shortName = "WALR"
         common_PM = {}
         for op in self.issue.options:
             common_PM[op.name] = 0
@@ -405,7 +441,7 @@ class Election:
                 else:
                     common_PM[op.name] += (ag.pm[op.name] * 1 / highestScore)
 
-        return ElectionResult(common_PM, name)
+        return ElectionResult(common_PM, name, shortName)
 
     def computeResultPlurality(self):  # Plurality
         voteScore = {}
@@ -417,7 +453,7 @@ class Election:
                 voteScore[wo] += 1 / len(winning_options)  # even though its not at all how Plurality
             # voting works in real life it most closely resembles the result of real Plurality voting,
             # where each voter would make a semi random choice about what option to choose
-        return ElectionResult(voteScore, "Plurality")
+        return ElectionResult(voteScore, "Plurality", "PL")
 
     def computeResultRC(self):  # Ranked Choice
         disregardedOptions = []
@@ -444,7 +480,7 @@ class Election:
                         lowestScore = score
 
                     if (score > 0.5):
-                        return ElectionResult(voteScore, "Ranked Choice")
+                        return ElectionResult(voteScore, "Ranked Choice", "RC")
 
             # print(lowestOption, " was the lowest option")
             disregardedOptions.append(lowestOption)
@@ -467,7 +503,7 @@ class Election:
                 for (op, score) in ag.pm.items():
                     if (score >= cutOff):
                         voteScore[op] += 1
-            return ElectionResult(voteScore, "Approval Voting")
+            return ElectionResult(voteScore, "Approval Voting", "AV")
 
 
 
@@ -480,7 +516,7 @@ class Election:
                 approved_options = Helper.getApproved(ag.pm, percentOfOptionsToApproveOf)
                 for ao in approved_options:
                     voteScore[ao] += 1
-            return ElectionResult(voteScore, "Approval Voting")
+            return ElectionResult(voteScore, "Approval Voting", "AV")
 
 
 class Helper:
@@ -528,7 +564,7 @@ def makeRandomCoordinates(numDimension, low=-dimensionSize, high=dimensionSize):
     return randomlist
 
 
-def makeAdjecentCoordinates(numDimension, point, standardDev=(float(dimensionSize)/10.0), low=-dimensionSize, high=dimensionSize):
+def makeAdjecentCoordinates(numDimension, point, standardDev=(float(dimensionSize)/5.0), low=-dimensionSize, high=dimensionSize):
     randomlist = []
     for i in range(numDimension):
         ok = False
@@ -567,6 +603,33 @@ def getCenterPointAgents(centerPoints, numAgents, numDimensions, issue):
         agents.append(ag)
     return agents
 
+def happinessOfAgentWithResult(agent: Agent, result: ElectionResult)-> int:
+    PM = agent.pm
+    happiness = 0
+    for op_name in PM.keys():
+        happiness += PM[op_name]*result.normalizedRanking[op_name]
+
+    return happiness
+
+def happinessOfAgentWithWinner(agent: Agent, result: ElectionResult)-> int:
+    PM = agent.pm
+    winners = Helper.getWinner(result.normalizedRanking)
+    happiness = 0
+    for op_name in winners:
+        happiness += PM[op_name]
+
+    return happiness/len(winners)
+
+def happinessOfAgentWithWinnerWeighted(agent: Agent, result: ElectionResult)-> int:
+    PM = agent.pm
+    winners = Helper.getWinner(result.normalizedRanking)
+    happiness = 0
+    for op_name in winners:
+        happiness += PM[op_name]*result.normalizedRanking[op_name]
+
+    return happiness/len(winners)
+
+
 
 def initializeRandomElection(numOptions, numAgents, numDimensions):
     return initializeElection(numOptions, numAgents, numDimensions)
@@ -598,137 +661,3 @@ def printDict(text, dict):
         print(key, ' : ', value)
 
 
-def generateStrategicVoting(kind="WR", numOptions=5, numAgents=10, iter=10000):
-    highestDifference = 0
-    rounds = 0
-    incNum = 0
-    election = initializeRandomElection(numOptions, numAgents, 2)
-    bestElection = copy.deepcopy(election)
-
-    if (numAgents == 2):
-        initialValue = 0.3;
-    else:
-        initialValue = 1.0 / (numAgents ** 2)
-
-    while (True):
-
-        if (highestDifference <= initialValue):
-            election = initializeRandomElection(numOptions, numAgents, 2)
-
-        for ag in election.agents:
-
-            # ag = election.agents[0]
-
-            result = election.computeResult(kind=kind)
-            strategicAgent = ag
-            initialCoordinates = strategicAgent.coordinates
-            initialPM = strategicAgent.pm
-            preferredOption = Helper.getWinner(strategicAgent.pm)[0]
-            winningOption = Helper.getWinner(result.normalizedRanking)[0]
-            if (preferredOption == winningOption):
-                election = copy.deepcopy(bestElection)
-                continue
-            initialHappiness = result.normalizedRanking[preferredOption]
-
-            optionsByName = [op.name for op in election.issue.options]
-            newCoordinates = election.issue.options[optionsByName.index(preferredOption)].coordinates
-            strategicAgent.setCoordinates(newCoordinates)
-            newPM = strategicAgent.pm
-
-            newResult = election.computeResult(kind=kind)
-
-            newHappiness = newResult.normalizedRanking[preferredOption]
-            happinessIncrease = newHappiness - initialHappiness
-
-            if (happinessIncrease > highestDifference):
-                print("better time ", incNum)
-                incNum += 1
-                highestDifference = happinessIncrease
-
-                bestResult = copy.deepcopy(result)
-                bestInitialCoordinates = initialCoordinates
-                bestInitialPM = initialPM
-                bestNewResult = copy.deepcopy(newResult)
-                bestNewPM = newPM
-                bestElection = copy.deepcopy(election)
-                bestStrategicAgentID = election.agents.index(strategicAgent)
-                bestWinOp = winningOption
-                bestPrefOp = preferredOption
-                # makeStratVotingPlot(kind, bestResult, bestNewResult, bestInitialPM, bestNewPM, bestInitialCoordinates,  bestStrategicAgentID, bestElection, bestWinOp, bestPrefOp, optionsByName)
-
-            strategicAgent.setCoordinates(initialCoordinates)
-
-            randAgentID = random.randint(0, len(election.agents) - 1)
-            newX = max(min(np.random.normal(election.agents[randAgentID].coordinates[0], scale=(float(dimensionSize)/10.0)), dimensionSize), -dimensionSize)
-            newY = max(min(np.random.normal(election.agents[randAgentID].coordinates[1], scale=(float(dimensionSize)/10.0)), dimensionSize), -dimensionSize)
-            election.agents[randAgentID].setCoordinates([newX, newY])
-
-            randOptionID = random.randint(0, len(election.issue.options) - 1)
-            newOX = max(min(np.random.normal(election.issue.options[randOptionID].coordinates[0], scale=(float(dimensionSize)/10.0)), dimensionSize), -dimensionSize)
-            newOY = max(min(np.random.normal(election.issue.options[randOptionID].coordinates[1], scale=(float(dimensionSize)/10.0)), dimensionSize), -dimensionSize)
-            election.issue.options[randOptionID].setCoordinates([newOX, newOY])
-
-        rounds += 1
-        print(rounds)
-        if (rounds > iter):
-            break
-
-    if (highestDifference > 0):
-        makeStratVotingPlot(kind, bestResult, bestNewResult, bestInitialPM, bestNewPM, bestInitialCoordinates,
-                            bestStrategicAgentID, bestElection, bestWinOp, bestPrefOp, optionsByName)
-    print("Best increase was", highestDifference)
-
-
-def makeStratVotingPlot(kind, result, newResult, initialPM, newPM, initialCoordinates, strategicAgentID, election,
-                        winningOption, preferredOption, optionsByName):
-    # result.printResults()
-    # print("Agent has this initial PM", initialPM)
-    # print(initialCoordinates, " -> ", strategicAgent.coordinates)
-    # print("Agent has this new PM", newPM)
-    # newResult.printResults()
-
-    strategicAgent = election.agents[strategicAgentID]
-
-    data = []
-    data.append([round(num, 3) for num in list(initialPM.values())])
-    data.append([round(num, 3) for num in list(result.normalizedRanking.values())])
-    data.append([round(num, 3) for num in list(newPM.values())])
-    data.append([round(num, 3) for num in list(newResult.normalizedRanking.values())])
-    data.append([round(res2 - res1, 3) for (res1, res2) in zip(data[1], data[3])])
-    plt.subplot(2, 2, 2)  # row 1, col 2 index 2 (because the agent we were given is already cheating)
-
-    election.print_election_plot(show=False, highlightAgent=election.agents.index(strategicAgent))
-    strategicAgent.setCoordinates(initialCoordinates)
-    plt.subplot(2, 2, 1)  # index 1
-
-    plt.title("Strategic Voting with {}".format(result.kind_of_eval), fontsize=11)
-
-    election.print_election_plot(show=False, highlightAgent=election.agents.index(strategicAgent))
-
-    ax = plt.subplot(2, 1, 2, visible=True)  # index 3
-
-    column_labels = ["Agents Pref", "Result", "Agents Vote", "Result", "Diff"]
-
-    data = np.array(data).T.tolist()
-    df = pd.DataFrame(data, columns=column_labels)
-
-    ax.axis('tight')
-    ax.axis('off')
-    tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=list(result.ranking.keys()),
-                   loc="center")
-
-    # Let's add some nice colors!
-
-    for i in range(len(column_labels)):
-
-        pref_cell = tab[optionsByName.index(preferredOption) + 1, i]
-        if (i < 2):  # we only need this for the first two cols
-            win_cell = tab[optionsByName.index(winningOption) + 1, i]
-            win_cell.set_facecolor('red')
-            ax.add_patch(win_cell)
-        pref_cell.set_facecolor('palegreen')
-        ax.add_patch(pref_cell)
-
-    plt.savefig("strat{}{}.png".format(kind, int(time())), dpi=300)
-
-    plt.show()

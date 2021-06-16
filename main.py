@@ -10,18 +10,26 @@ import math
 import string
 import random
 import pandas as pd
-from classes import Option, Issue, Agent, Election, initializeRandomElection, initializeElection, generateStrategicVoting
+from classes import Option, Issue, Agent, Election, initializeRandomElection, initializeElection
+from strategicVoting import generateStrategicVoting, computePossibilityStratVote
 
 
 
-def print_hi(name):
+def method():
 
     # election = initializeElection(5, 100, 2, centerPoints=[(0.4, (5,5)), (0.3, (-30,-90)), (0.2, (-60,90)), (0.1, (80, -25))])
-    election = initializeRandomElection(5, 50, 2)
-    # election.print_result_table()
-    # election.print_election_plot(colorWeighted=True, linear=False)
+    # # election = initializeRandomElection(4, 500, 2)
+    # # election.print_result_table()
+    # # election.print_election_plot(colorWeighted=True, linear=False)
+    #
+    # election.make_result_graphic()
 
-    election.make_result_graphic()
+
+
+    # election.print_election_plot(show=True, colorPlurality=True)
+    # plt.figure(dpi=2000)
+    # election.print_result_table(show=False)
+
 
 
     # for kind in ["WR", "WAR", "AV", "RC", "PL", "WLR", "WALR"]:
@@ -29,9 +37,52 @@ def print_hi(name):
     #     generateStrategicVoting(kind=kind, numOptions=5, numAgents=2, iter=10000)
 
 
+# Example for Arrows Theorem:
+#     op1 = Option([-70,50]) #X
+#     op2 = Option([70, 50]) #Z
+#     op3 = Option([0, -50]) #Y
+#
+#     issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+#
+#     agents = []
+#
+#     for i in range(45):
+#         agents.append(Agent([-62, 40], issue1))
+#     for i in range(35):
+#         agents.append(Agent([10, -40], issue1))
+#     for i in range(20):
+#         agents.append(Agent([55, 50], issue1))
+#
+#
+#     # election = initializeRandomElection(5,100,3)
+#     election = Election(issue1, agents)
+#     election.make_result_graphic()
+#     print(agents[0].pm)
+#     print(agents[20].pm)
+#     print(agents[55].pm)
 
 
-    # Use a breakpoint in the code line below to debug your script.
+# Strategic Voting!
+    op1 = Option([10,20])
+    op2 = Option([-50, 80])
+    op3 = Option([50, -40])
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    ag1 = Agent([-60,87], issue1)
+    ag2 = Agent([59,-47], issue1)
+    ag4 = Agent([-62,79], issue1)
+    ag3 = Agent([-10,10], issue1)
+
+    # election = initializeRandomElection(5,100,3)
+    election = Election(issue1, [ag1, ag2, ag3, ag4])
+    election.print_election_plot(colorPlurality=True)
+
+
+
+    print(computePossibilityStratVote(election, "WR"))
+
+
+
 
 # Example with a critical result:
 #     op1 = Option([1,2])
@@ -108,11 +159,9 @@ def print_hi(name):
     # root.mainloop()
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    method()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
 
-# def genrateARandomElection(int countOfAgents, int countOfOptions):
