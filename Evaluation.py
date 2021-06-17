@@ -1,7 +1,7 @@
 
 
 import numpy as np
-from classes import ElectionResult, Election, happinessOfAgentWithResult, initializeRandomElection, happinessOfAgentWithWinner, happinessOfAgentWithWinnerWeighted
+from classes import ElectionResult, Election, happinessOfAgentWithResult, initializeRandomElection, happinessOfAgentWithWinner, happinessOfAgentWithWinnerWeighted, distanceOfAgentToResult, squaredDistanceOfAgentToResult
 
 
 
@@ -14,17 +14,34 @@ def method():
 def makeAHappinessPlot():
 
     election = initializeRandomElection(5,200,2)
+    for eval in ["dist", "sqdist", "hap", "hww", "hw"]:
+        print(eval)
+        for kind in ["WR", "WAR", "AV", "RC", "PL", "WLR", "WALR"]:
+            result = election.computeResult(kind)
+
+            print(kind, computeHappinessWithResult(election, result, kind=eval))
+        print("-----------------------------")
     for kind in ["WR", "WAR", "AV", "RC", "PL", "WLR", "WALR"]:
         result = election.computeResult(kind)
         print(kind, computeVarianceOfHappiness(election, result))
 
 
-def computeHappinessWithResult(election: Election, result: ElectionResult)-> float:
+
+def computeHappinessWithResult(election: Election, result: ElectionResult, kind="dist")-> float:
 
     totalHappiness = 0
 
     for agent in election.agents:
-        totalHappiness += happinessOfAgentWithResult(agent, result)
+        if(kind =="dist"):
+            totalHappiness += distanceOfAgentToResult(agent, result)
+        if (kind == "hap"):
+            totalHappiness += happinessOfAgentWithResult(agent, result)
+        if (kind == "hww"):
+            totalHappiness += happinessOfAgentWithWinnerWeighted(agent, result)
+        if (kind == "hw"):
+            totalHappiness += happinessOfAgentWithWinner(agent, result)
+        if (kind == "sqdist"):
+            totalHappiness += squaredDistanceOfAgentToResult(agent, result)
 
     return totalHappiness
 

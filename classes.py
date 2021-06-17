@@ -20,6 +20,7 @@ colormap = np.array(['teal', 'purple', 'yellow', 'steelblue', 'green',  'pink', 
 dimensionSize = 100
 alphabet_string = string.ascii_uppercase
 alphabet_list = list(alphabet_string)
+kindDict = {"WR": "Weighted Ranking", "WLR": "Weightes Linear Ranking", "AV": "Approval Voting", "PL": "Plurality Voting", "WAR": "Weighted Approval Ranking", "WALR": "Weighted Approval Linear Ranking", "RC": "Ranked Choice"}
 
 
 class Issue(object):
@@ -62,7 +63,7 @@ class Agent(object):
 
             dist = self.computeDistance(op)
             if (dist == 0):
-                dist = 0.0000000001
+                dist = 0.0000000000000000000000001
             pref = pow(dist, -1)  # raise to the power of -1 to make agents prefer the option with the lowest distance
             pm[op.name] = pref;
             normalization_faktor += pref;
@@ -113,17 +114,102 @@ class Agent(object):
             dist += pow(self.coordinates[i] - option.coordinates[i], 2)
         return math.sqrt(dist)
 
+    def getBallot(self, kind="WR"):
+
+        if(kind== "WR"):
+            return self.pm
+        if (kind == "WAR"):
+            return self.getWeightedApprovalBallot()
+        if (kind == "WALR"):
+            return self.getWeightedApprovalBallot(linear=True)
+        if (kind == "WLR"):
+            return self.linearPM
+        if (kind == "PL"):
+            return self.getPluralityBallot()
+        if (kind == "RC"):
+            return self.getRankedChoiceBallot()
+        if (kind == "AV"):
+            return self.getApprovalBallot()
+
+
+
+    def getPluralityBallot(self):
+        winners = Helper.getWinner(self.pm)
+        ballot = Helper.getEmptyDict(list(self.pm.keys()))
+        for win in winners:
+            ballot[win] = 1/len(winners)
+
+        return ballot
+
+    def getWeightedApprovalBallot(self, linear=False):
+        PM = self.pm
+        if(linear):
+            PM = self.linearPM
+        winner = Helper.getWinner(PM)[0]
+        highestScore = PM[winner]
+        ballot = copy.deepcopy(PM)
+        for opName, score in ballot.items():
+            ballot[opName] = score/highestScore
+        if(ballot[winner] != 1):
+            print("something went wrong with the approval ballot")
+        return ballot
+
+
+    #we don't wont anyone to choose one option and not another one simply because they are
+    # later in the alphabet
+
+    def getApprovalBallot(self, fractionOfChosenOptions = 0.5):
+
+        sortPM = Helper.sortDictDescending(self.pm)
+        ballot = Helper.getEmptyDict(list(self.pm.keys()))
+        for num, (opName, score) in enumerate(sortPM.items()):
+            if(num< len(sortPM.items())*fractionOfChosenOptions):
+                ballot[opName]= 1
+            # else:
+            #     if(score == list(ballot.values())[-1]):
+            #         ballot[opName] = 1
+        return ballot
+
+    def getRankedChoiceBallot(self):
+        ballot = {}
+        for num, (opName, score) in enumerate(Helper.sortDictDescending(self.pm).items()):
+
+            ballot[opName] = num+1
+        return ballot
+
+    def getRankedChoicePick(self, lostOptions):
+        ballot = self.getRankedChoiceBallot()
+        for opName, score in ballot.items():
+            if(opName not in lostOptions):
+                return opName
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def common_PM(args):
     pass
 
 
 class ElectionResult(object):
-    def __init__(self, ranking, kind_of_eval, short_kind_of_eval):
+    def __init__(self, ranking, short_kind_of_eval):
         self.ranking = ranking
         self.normalizedRanking = Helper.normalizeDict(ranking)
-        self.kind_of_eval = kind_of_eval
         self.short_kind_of_eval = short_kind_of_eval
+        self.kind_of_eval = kindDict[short_kind_of_eval]
 
     def printResults(self):
         print("Using {} the winning option is {} and these are the normalized results {}. Absolute results: {}".format(
@@ -148,7 +234,7 @@ class Election:
         # result_list.append(self.computeResultWAR(linear=True))
 
         for kind in ["PL", "RC", "AV", "WR", "WLR", "WAR", "WALR"]:
-            result_list.append(self.computeResult(kind=kind))
+            result_list.append(self.computeBallotResult(kind=kind))
 
         return result_list
 
@@ -382,6 +468,54 @@ class Election:
         plt.show()
 
 
+    def computeBallotResult(self, kind="WR"):
+
+        if(kind == "RC"):
+            return self.computeBallotResultRC()
+        else:
+
+
+            return self.computeAdditiveResults(kind)
+
+    def computeAdditiveResults(self, kind="WR"):
+        result = Helper.getEmptyDict(list(self.agents[0].pm.keys()))
+        for ag in self.agents:
+            for opName, score in ag.getBallot(kind=kind).items():
+                result[opName] += score
+        return ElectionResult(result, kind)
+
+    def computeBallotResultRC(self):
+
+        noWinner = True
+        lostOptions = []
+        while(noWinner):
+            result = Helper.getEmptyDict(list(self.agents[0].pm.keys()))
+            for ag in self.agents:
+                result[ag.getRankedChoicePick(lostOptions)] += 1
+            winners = Helper.getWinner(result)
+            normResult = Helper.normalizeDict(result)
+            if(normResult[winners[0]] > 0.5):
+                return ElectionResult(result, "RC")
+            looser = Helper.getLooser(result)
+            if(len(looser)>1):
+                if(len(looser)==len(result)): # There is no winner and there won't be one
+                    return ElectionResult(result, "RC")
+                lostOptions.extend(looser)
+                # print("We have a tie in RC!")
+            lostOptions.append(looser[0])
+
+
+
+
+
+
+
+
+
+
+
+
+
     def computeResult(self, kind="WR"):
 
         if (kind == "WR"):
@@ -406,7 +540,7 @@ class Election:
             for ag in self.agents:
                 common_PM[op.name] += ag.pm[op.name]
 
-        return ElectionResult(common_PM, "Weighted Ranking", "WR")
+        return ElectionResult(common_PM, "WR")
 
     def computeResultWLR(self):  # Weighted Linear Ranking
         common_lin_PM = {}
@@ -415,14 +549,12 @@ class Election:
             for ag in self.agents:
                 common_lin_PM[op.name] += ag.linearPM[op.name]
 
-        return ElectionResult(common_lin_PM, "Weighted Linear Ranking", "WLR")
+        return ElectionResult(common_lin_PM, "WLR")
 
     def computeResultWAR(self, linear=FALSE):  # Weighted Approval Ranking
         # print("results of weighted ranking: ")
-        name = "Weighted Appoval Ranking"
-        shortName = "WAV"
+        shortName = "WAR"
         if (linear):
-            name = "Weighted Approval Linear Ranking"
             shortName = "WALR"
         common_PM = {}
         for op in self.issue.options:
@@ -441,7 +573,7 @@ class Election:
                 else:
                     common_PM[op.name] += (ag.pm[op.name] * 1 / highestScore)
 
-        return ElectionResult(common_PM, name, shortName)
+        return ElectionResult(common_PM, shortName)
 
     def computeResultPlurality(self):  # Plurality
         voteScore = {}
@@ -453,7 +585,7 @@ class Election:
                 voteScore[wo] += 1 / len(winning_options)  # even though its not at all how Plurality
             # voting works in real life it most closely resembles the result of real Plurality voting,
             # where each voter would make a semi random choice about what option to choose
-        return ElectionResult(voteScore, "Plurality", "PL")
+        return ElectionResult(voteScore, "PL")
 
     def computeResultRC(self):  # Ranked Choice
         disregardedOptions = []
@@ -480,7 +612,7 @@ class Election:
                         lowestScore = score
 
                     if (score > 0.5):
-                        return ElectionResult(voteScore, "Ranked Choice", "RC")
+                        return ElectionResult(voteScore, "RC")
 
             # print(lowestOption, " was the lowest option")
             disregardedOptions.append(lowestOption)
@@ -500,10 +632,10 @@ class Election:
             for op in self.issue.options:
                 voteScore[op.name] = 0
             for ag in self.agents:
-                for (op, score) in ag.pm.items():
+                for (opName, score) in ag.pm.items():
                     if (score >= cutOff):
-                        voteScore[op] += 1
-            return ElectionResult(voteScore, "Approval Voting", "AV")
+                        voteScore[opName] += 1
+            return ElectionResult(voteScore, "AV")
 
 
 
@@ -516,7 +648,7 @@ class Election:
                 approved_options = Helper.getApproved(ag.pm, percentOfOptionsToApproveOf)
                 for ao in approved_options:
                     voteScore[ao] += 1
-            return ElectionResult(voteScore, "Approval Voting", "AV")
+            return ElectionResult(voteScore, "AV")
 
 
 class Helper:
@@ -537,6 +669,17 @@ class Helper:
                     bestOption.append(option)
         return bestOption  # returns a list containing either the best option or all options that tie for best option
 
+    def getLooser(resultDict):
+        worstOptions = [list(resultDict.keys())[0]]
+        for (optionName, score) in resultDict.items():
+            if (resultDict[worstOptions[0]] > score):
+                worstOptions = [optionName]
+            if (resultDict[worstOptions[0]] == score and worstOptions[0] != optionName):
+                worstOptions.append(optionName)
+        return worstOptions  # returns a list containing either the worst option or all options that tie for worst option
+
+
+
     def normalizeDict(dict):
         prefs = 0
         for (op_name, pref) in dict.items():
@@ -551,9 +694,18 @@ class Helper:
     def getApproved(diction, percentOfOprionsToApproveOf):
         sorted_dict = dict(sorted(diction.items(), key=lambda item: item[1], reverse=True))
         approved_options = []
-        for i in range(int(len(diction) * percentOfOprionsToApproveOf)):
+        for i in range(math.ceil(len(diction) * percentOfOprionsToApproveOf)):
             approved_options.append(list(sorted_dict.keys())[i])
         return approved_options
+
+    def getEmptyDict(options):
+
+        return dict(zip(options, [0] * len(options)))
+
+    def sortDictDescending(diction):
+
+        return dict(sorted(diction.items(), key=lambda item: item[1], reverse=True))
+
 
 
 def makeRandomCoordinates(numDimension, low=-dimensionSize, high=dimensionSize):
@@ -603,7 +755,7 @@ def getCenterPointAgents(centerPoints, numAgents, numDimensions, issue):
         agents.append(ag)
     return agents
 
-def happinessOfAgentWithResult(agent: Agent, result: ElectionResult)-> int:
+def happinessOfAgentWithResult(agent: Agent, result: ElectionResult)-> float:
     PM = agent.pm
     happiness = 0
     for op_name in PM.keys():
@@ -611,7 +763,23 @@ def happinessOfAgentWithResult(agent: Agent, result: ElectionResult)-> int:
 
     return happiness
 
-def happinessOfAgentWithWinner(agent: Agent, result: ElectionResult)-> int:
+def distanceOfAgentToResult(agent: Agent, result: ElectionResult)-> float:
+    PM = agent.pm
+    distance = 0
+    for op_name in PM.keys():
+        distance += abs(PM[op_name]-result.normalizedRanking[op_name])
+
+    return distance
+
+def squaredDistanceOfAgentToResult(agent: Agent, result: ElectionResult)-> float:
+    PM = agent.pm
+    distance = 0
+    for op_name in PM.keys():
+        distance += (PM[op_name]-result.normalizedRanking[op_name])**2
+
+    return distance
+
+def happinessOfAgentWithWinner(agent: Agent, result: ElectionResult)-> float:
     PM = agent.pm
     winners = Helper.getWinner(result.normalizedRanking)
     happiness = 0
@@ -620,7 +788,7 @@ def happinessOfAgentWithWinner(agent: Agent, result: ElectionResult)-> int:
 
     return happiness/len(winners)
 
-def happinessOfAgentWithWinnerWeighted(agent: Agent, result: ElectionResult)-> int:
+def happinessOfAgentWithWinnerWeighted(agent: Agent, result: ElectionResult)-> float:
     PM = agent.pm
     winners = Helper.getWinner(result.normalizedRanking)
     happiness = 0

@@ -38,48 +38,48 @@ def method():
 
 
 # Example for Arrows Theorem:
-#     op1 = Option([-70,50]) #X
-#     op2 = Option([70, 50]) #Z
-#     op3 = Option([0, -50]) #Y
-#
-#     issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-#
-#     agents = []
-#
-#     for i in range(45):
-#         agents.append(Agent([-62, 40], issue1))
-#     for i in range(35):
-#         agents.append(Agent([10, -40], issue1))
-#     for i in range(20):
-#         agents.append(Agent([55, 50], issue1))
-#
-#
-#     # election = initializeRandomElection(5,100,3)
-#     election = Election(issue1, agents)
-#     election.make_result_graphic()
+    op1 = Option([-70,50]) #X A
+    op2 = Option([70, 50]) #Z B
+    op3 = Option([0, -50]) #Y C
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+
+    agents = []
+
+    for i in range(1): #(45):
+        agents.append(Agent([-62, 40], issue1)) #(A,C)
+    for i in range(1): #(35):
+        agents.append(Agent([10, -40], issue1)) #(C,B)
+    for i in range(1): #(20):
+        agents.append(Agent([10, 50], issue1)) #(B,A)
+
+
+    # election = initializeRandomElection(5,100,3)
+    election = Election(issue1, agents)
+    election.make_result_graphic()
 #     print(agents[0].pm)
 #     print(agents[20].pm)
 #     print(agents[55].pm)
 
 
 # Strategic Voting!
-    op1 = Option([10,20])
-    op2 = Option([-50, 80])
-    op3 = Option([50, -40])
+#     op1 = Option([10,20])
+#     op2 = Option([-50, 80])
+#     op3 = Option([50, -40])
+#
+#     issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+#     ag1 = Agent([-60,87], issue1)
+#     ag2 = Agent([59,-47], issue1)
+#     ag4 = Agent([-62,79], issue1)
+#     ag3 = Agent([-10,10], issue1)
+#
+#     # election = initializeRandomElection(5,100,3)
+#     election = Election(issue1, [ag1, ag2, ag3, ag4])
+#     election.print_election_plot(colorPlurality=True)
 
-    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-    ag1 = Agent([-60,87], issue1)
-    ag2 = Agent([59,-47], issue1)
-    ag4 = Agent([-62,79], issue1)
-    ag3 = Agent([-10,10], issue1)
-
-    # election = initializeRandomElection(5,100,3)
-    election = Election(issue1, [ag1, ag2, ag3, ag4])
-    election.print_election_plot(colorPlurality=True)
 
 
-
-    print(computePossibilityStratVote(election, "WR"))
+    # print(computePossibilityStratVote(election, "WR"))
 
 
 

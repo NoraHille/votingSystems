@@ -1,4 +1,4 @@
-from classes import Option, Issue, Agent, Election, initializeRandomElection, ElectionResult, happinessOfAgentWithResult, happinessOfAgentWithWinner
+from classes import Option, Issue, Agent, Election, initializeRandomElection, ElectionResult, happinessOfAgentWithResult, happinessOfAgentWithWinner, Helper
 from strategicVoting import computePossibilityStratVote
 
 
@@ -143,7 +143,52 @@ class TestVotingResults(unittest.TestCase):
         self.assertEqual(0.75, happinessOfAgentWithWinner(ag, result))
         self.assertEqual(0.75, happinessOfAgentWithWinner(ag, result2))
 
+    def test_getEmptyDict(self):
+        op1 = Option([50, 80])
+        op2 = Option([-50, 80])
 
+        issue1 = Issue([op1, op2], ["freedom", "taxes"])
+        ag = Agent([20, 40], issue1)
+        self.assertEqual({"A":0, "B":0}, Helper.getEmptyDict(list(ag.pm.keys())))
+
+
+    def test_RC_and_AV(self):
+        op1 = Option([-70, 50])  # X A
+        op2 = Option([70, 50])  # Z B
+        op3 = Option([0, -50])  # Y C
+
+        issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+
+        agents = []
+
+        for i in range(45):
+            agents.append(Agent([-62, 40], issue1))  # (A,C)
+        for i in range(35):
+            agents.append(Agent([10, -40], issue1))  # (C,B)
+        for i in range(20):
+            agents.append(Agent([10, 50], issue1))  # (B,A)
+        election = Election(issue1, agents)
+        self.assertEqual([0.65, 0.0, 0.35], [round(v,2) for (k,v) in election.computeBallotResult("RC").normalizedRanking.items()])
+        self.assertEqual([0.33, 0.28, 0.4], [round(v,2) for (k,v) in election.computeBallotResult("AV").normalizedRanking.items()])
+
+    def test_RC_and_AV_2(self):
+        op1 = Option([34, 67])  # X A
+        op2 = Option([80, 46])  # Z B
+        op3 = Option([-35, 6])  # Y C
+
+        issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+
+        agents = []
+
+        for i in range(45):
+            agents.append(Agent([-90, 45], issue1))  # (A,C)
+        for i in range(35):
+            agents.append(Agent([10, -40], issue1))  # (C,B)
+        for i in range(200):
+            agents.append(Agent([10, 10], issue1))  # (B,A)
+        election = Election(issue1, agents)
+        self.assertEqual([round(v,5) for (k,v) in election.computeResult("RC").normalizedRanking.items()], [round(v,5) for (k,v) in election.computeBallotResult("RC").normalizedRanking.items()])
+        self.assertEqual([round(v,5) for (k,v) in election.computeResult("AV").normalizedRanking.items()], [round(v,5) for (k,v) in election.computeBallotResult("AV").normalizedRanking.items()])
 
 
 
