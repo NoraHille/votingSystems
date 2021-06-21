@@ -7,6 +7,10 @@ import string
 import random
 import copy
 from time import time
+from Helper import Helper, colormap, dimensionSize, alphabet_string, alphabet_list, kindDict
+
+
+from agent import Agent
 
 # Todo:
 # - show absolute as well as relative values
@@ -15,12 +19,6 @@ from time import time
 # - Simulate strategic voting -> Come up with a score
 # - Testing! You need to be CERTAIN everything is right!
 
-
-colormap = np.array(['teal', 'purple', 'yellow', 'steelblue', 'green',  'pink', 'red', 'brown', 'gray'])
-dimensionSize = 100
-alphabet_string = string.ascii_uppercase
-alphabet_list = list(alphabet_string)
-kindDict = {"WR": "Weighted Ranking", "WLR": "Weightes Linear Ranking", "AV": "Approval Voting", "PL": "Plurality Voting", "WAR": "Weighted Approval Ranking", "WALR": "Weighted Approval Linear Ranking", "RC": "Ranked Choice"}
 
 
 class Issue(object):
@@ -32,6 +30,33 @@ class Issue(object):
             options[i].setName(alphabet_list[i])
             if len(options[i].coordinates) != len(dimensions):
                 print("options has wrong number of dimensions")
+    def numDimensions(self):
+        return len(self.dimensions)
+
+    def getRandomAgents(self, numAgents):
+        agents = []
+        for i in range(numAgents):
+            ag = Agent(makeRandomCoordinates(self.numDimensions()), self)
+            agents.append(ag)
+        return agents
+
+    def getCenterPointAgents(self, centerPoints, numAgents):
+        listOfChangePoints = []
+        agents = []
+        changePoint = 0
+        for (rate, cp) in centerPoints:
+            changePoint += rate * numAgents
+            listOfChangePoints.append(changePoint)
+
+        print(listOfChangePoints)
+        for i in range(numAgents):
+            currentIndex = 0
+            for num, cp in enumerate(listOfChangePoints):
+                if (i > cp):
+                    currentIndex = num + 1
+            ag = Agent(makeAdjecentCoordinates(self.numDimensions(), centerPoints[currentIndex][1]), self)
+            agents.append(ag)
+        return agents
 
 
 class Option(object):
@@ -45,163 +70,6 @@ class Option(object):
     def setCoordinates(self, coordinates):
         self.coordinates = coordinates
 
-
-class Agent(object):
-    def __init__(self, coordinates, issue):
-        self.issue = issue
-        self.setCoordinates(coordinates)
-
-    def setCoordinates(self, coordinates):
-        self.coordinates = coordinates  # coordinates is a list of real numbers, each number being associated with a dimension in the issue
-        self.pm = self.create_PM(self.issue)
-        self.linearPM = self.create_linear_PM(self.issue)
-
-    def create_PM(self, issue):
-        pm = {}
-        normalization_faktor = 0;
-        for op in issue.options:
-
-            dist = self.computeDistance(op)
-            if (dist == 0):
-                dist = 0.0000000000000000000000001
-            pref = pow(dist, -1)  # raise to the power of -1 to make agents prefer the option with the lowest distance
-            pm[op.name] = pref;
-            normalization_faktor += pref;
-        # normalize PM so it adds up to 1
-        sum_of_preferences = 0
-        for (op_name, pref) in pm.items():
-            normalized_pref = pref / normalization_faktor
-            pm[op_name] = normalized_pref
-            sum_of_preferences += normalized_pref
-        # if(sum_of_preferences != 1):
-        # print("Something went wrong with the normalization, the normalized value is ", sum_of_preferences)
-        # print("The PM of an agent is: ", pm)
-        return pm
-
-    def create_linear_PM(self, issue):
-        pm = {}
-        sumOfDist = 0;
-        for op in issue.options:
-
-            dist = self.computeDistance(op)
-            if (dist == 0):
-                dist = 0.0000000001
-            pref = dist
-            pm[op.name] = pref;
-            sumOfDist += dist;
-        # linearly invert
-
-        sum_of_inv_preferences = 0
-        for (op_name, pref) in pm.items():
-            inverted_pref = sumOfDist - pref
-            pm[op_name] = inverted_pref
-            sum_of_inv_preferences += inverted_pref
-
-        # normalize PM so it adds up to 1
-        sum_of_preferences = 0
-        for (op_name, pref) in pm.items():
-            normalized_pref = pref / sum_of_inv_preferences
-            pm[op_name] = normalized_pref
-            sum_of_preferences += normalized_pref
-        # if(sum_of_preferences != 1):
-        # print("Something went wrong with the normalization, the normalized value is ", sum_of_preferences)
-        # print("The PM of an agent is: ", pm)
-        return pm
-
-    def computeDistance(self, option):
-        dist = 0;
-        for i in range(len(self.coordinates)):
-            dist += pow(self.coordinates[i] - option.coordinates[i], 2)
-        return math.sqrt(dist)
-
-    def getBallot(self, kind="WR"):
-
-        if(kind== "WR"):
-            return self.pm
-        if (kind == "WAR"):
-            return self.getWeightedApprovalBallot()
-        if (kind == "WALR"):
-            return self.getWeightedApprovalBallot(linear=True)
-        if (kind == "WLR"):
-            return self.linearPM
-        if (kind == "PL"):
-            return self.getPluralityBallot()
-        if (kind == "RC"):
-            return self.getRankedChoiceBallot()
-        if (kind == "AV"):
-            return self.getApprovalBallot()
-
-
-
-    def getPluralityBallot(self):
-        winners = Helper.getWinner(self.pm)
-        ballot = Helper.getEmptyDict(list(self.pm.keys()))
-        for win in winners:
-            ballot[win] = 1/len(winners)
-
-        return ballot
-
-    def getWeightedApprovalBallot(self, linear=False):
-        PM = self.pm
-        if(linear):
-            PM = self.linearPM
-        winner = Helper.getWinner(PM)[0]
-        highestScore = PM[winner]
-        ballot = copy.deepcopy(PM)
-        for opName, score in ballot.items():
-            ballot[opName] = score/highestScore
-        if(ballot[winner] != 1):
-            print("something went wrong with the approval ballot")
-        return ballot
-
-
-    #we don't wont anyone to choose one option and not another one simply because they are
-    # later in the alphabet
-
-    def getApprovalBallot(self, fractionOfChosenOptions = 0.5):
-
-        sortPM = Helper.sortDictDescending(self.pm)
-        ballot = Helper.getEmptyDict(list(self.pm.keys()))
-        for num, (opName, score) in enumerate(sortPM.items()):
-            if(num< len(sortPM.items())*fractionOfChosenOptions):
-                ballot[opName]= 1
-            # else:
-            #     if(score == list(ballot.values())[-1]):
-            #         ballot[opName] = 1
-        return ballot
-
-    def getRankedChoiceBallot(self):
-        ballot = {}
-        for num, (opName, score) in enumerate(Helper.sortDictDescending(self.pm).items()):
-
-            ballot[opName] = num+1
-        return ballot
-
-    def getRankedChoicePick(self, lostOptions):
-        ballot = self.getRankedChoiceBallot()
-        for opName, score in ballot.items():
-            if(opName not in lostOptions):
-                return opName
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def common_PM(args):
-    pass
 
 
 class ElectionResult(object):
@@ -218,502 +86,6 @@ class ElectionResult(object):
                 self.normalizedRanking), self.normalizedRanking, self.ranking))
 
 
-class Election:
-    def __init__(self, issue, agents):
-        self.issue = issue
-        self.agents = agents
-
-    def computeAllResults(self):
-        result_list = []
-        # result_list.append(self.computeResultPlurality())
-        # result_list.append(self.computeResultRC())
-        # result_list.append(self.computeResultAV(cutOffScore=0))
-        # result_list.append(self.computeResultWR())
-        # result_list.append(self.computeResultWLR())
-        # result_list.append(self.computeResultWAR())
-        # result_list.append(self.computeResultWAR(linear=True))
-
-        for kind in ["PL", "RC", "AV", "WR", "WLR", "WAR", "WALR"]:
-            result_list.append(self.computeBallotResult(kind=kind))
-
-        return result_list
-
-    def print_election_plot(self, show=True, highlightAgent=None, colorPlurality=False, colorWeighted=False, linear=False, scale=1):
-
-        if (len(self.issue.dimensions) != 2):
-            print("You tried to plot an election with more/less than 2 dimensions, namely ", len(self.issue.dimensions))
-            return
-
-        ag_x = []
-        ag_y = []
-        agentCat = []
-        for ag in self.agents:
-            if (len(Helper.getWinner(ag.pm)) > 1):
-                print("an agent is torn between multiple options!")
-            choice = Helper.getWinner(ag.pm)[0]
-            optionNameList = [op.name for op in self.issue.options]
-            choiceID = optionNameList.index(choice)
-            agentCat.append(choiceID)
-            ag_x.append(ag.coordinates[0])
-            ag_y.append(ag.coordinates[1])
-
-        if (not colorPlurality and not colorWeighted):
-            plt.scatter(ag_x, ag_y)
-        else:
-            if (colorPlurality):
-                plt.scatter(ag_x, ag_y, s=10, c=colormap[agentCat])
-
-            else:
-
-                optionNameList = [op.name for op in self.issue.options]
-                sizer = 50*1.0/(scale)
-                exp = 2
-
-                for ag in self.agents:
-                    if (linear):
-                        sorted_dict = dict(sorted(ag.linearPM.items(), key=lambda item: item[1], reverse=True))
-                        sorted_dict_rev = dict(sorted(ag.linearPM.items(), key=lambda item: item[1], reverse=False))
-                        # sizer= 8
-                        # exp = 10
-                    else:
-                        sorted_dict = dict(sorted(ag.pm.items(), key=lambda item: item[1], reverse=True))
-                        sorted_dict_rev = dict(sorted(ag.pm.items(), key=lambda item: item[1], reverse=False))
-
-                    size = 0
-                    for op, score in sorted_dict_rev.items():
-                        sadd = (sizer * score) ** exp
-
-                        size += sadd
-
-                    for op, score in sorted_dict.items():
-                        optionID = optionNameList.index(op)
-
-                        plt.scatter(ag.coordinates[0], ag.coordinates[1], s=size, c=colormap[optionID])
-                        size -= (sizer * score) ** exp
-
-                # # first define the ratios
-                # r1 = 0.9  # 20%
-                # r2 = r1 + 0.05  # 40%
-                #
-                # # define some sizes of the scatter marker
-                # sizes = [60, 80, 120]
-                #
-                # # calculate the points of the first pie marker
-                # #
-                # # these are just the origin (0,0) +
-                # # some points on a circle cos,sin
-                #
-                #
-                # x = [0] + np.cos(np.linspace(0, 2 * math.pi * r1, 10)).tolist()
-                # y = [0] + np.sin(np.linspace(0, 2 * math.pi * r1, 10)).tolist()
-                # xy1 = list(zip(x, y))
-                # plt.scatter(ag_x, ag_y, s=100, marker=xy1, c='green')
-                #
-                # # ...
-                # x = [0] + np.cos(np.linspace(2 * math.pi * r1, 2 * math.pi * r2, 10)).tolist()
-                # y = [0] + np.sin(np.linspace(2 * math.pi * r1, 2 * math.pi * r2, 10)).tolist()
-                # xy2 = list(zip(x, y))
-                # plt.scatter(ag_x, ag_y, s=100, marker=xy2, c='red')
-                #
-                # x = [0] + np.cos(np.linspace(2 * math.pi * r2, 2 * math.pi, 10)).tolist()
-                # y = [0] + np.sin(np.linspace(2 * math.pi * r2, 2 * math.pi, 10)).tolist()
-                # xy3 = list(zip(x, y))
-                # plt.scatter(ag_x, ag_y, s=100, marker=xy3, c='blue')
-
-        op_x = []
-        op_y = []
-        op_names = []
-        for op in self.issue.options:
-            op_x.append(op.coordinates[0])
-            op_y.append(op.coordinates[1])
-            op_names.append(op.name)
-
-        optionCat = np.array(range(len(self.issue.options)))
-
-        if (not colorPlurality and not colorWeighted):
-            plt.scatter(op_x, op_y, color="red")
-        else:
-            plt.scatter(op_x, op_y, marker='D',edgecolors='black', s=200, c=colormap[optionCat])
-
-
-
-
-
-
-
-        if (highlightAgent != None):
-            x = self.agents[highlightAgent].coordinates[0]
-            y = self.agents[highlightAgent].coordinates[1]
-            plt.scatter(x, y, s=10, color="darkblue")
-
-        for i, txt in enumerate(op_names):
-            plt.annotate(txt, xy=(op_x[i], op_y[i]), xytext=(op_x[i]-2*scale, op_y[i]-2*scale))
-
-        plt.xlim([-dimensionSize, dimensionSize])
-        plt.ylim([-dimensionSize, dimensionSize])
-
-        if (show):
-            plt.show()
-
-    def print_elec_table(self):
-
-
-        if(len(self.agents) > 5):
-            print("Too many agents to fit into table")
-            return
-
-        column_labels = []
-        data = []
-        _, ax = plt.subplots(1, 1)
-        for i, ag in enumerate(self.agents):
-            column_labels.append("ag" + str(i))
-            data.append([round(num, 3) for num in list(ag.pm.values())])
-        data = np.array(data).T.tolist()
-        df = pd.DataFrame(data, columns=column_labels)
-        ax.axis('tight')
-        ax.axis('off')
-        tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=list(self.agents[0].pm.keys()),
-                       loc="center")
-        tab.auto_set_font_size(False)
-        tab.set_fontsize(6)
-        tab.scale(1.1, 1)
-
-        plt.savefig("elecTable.png", dpi=300)
-
-
-
-
-
-
-    def print_result_table(self, rounded=True, show=True, ax=None):
-
-        result_list = self.computeAllResults()
-
-        column_labels = []
-        data = []
-
-
-
-
-        if(ax == None):
-            _, ax = plt.subplots(1, 1)
-        for res in result_list:
-            column_labels.append(res.short_kind_of_eval)
-            # data.append([round(num, 3) for num in list(res.ranking.values())])
-            data.append([round(num, 3) for num in list(res.normalizedRanking.values())])
-        #     data.append([round(abs, 3) + "(" + round(rel, 3) + ")" for num, rel in zip(list(res.ranking.values()), list(res.normalizedRanking.values()))])
-        data = np.array(data).T.tolist()
-        print(data)
-        df = pd.DataFrame(data, columns=column_labels)
-        ax.axis('tight')
-        ax.axis('off')
-        print(list(result_list[0].ranking.keys()))
-        tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=list(result_list[0].ranking.keys()),
-                       loc="center")
-        tab.auto_set_font_size(False)
-        tab.set_fontsize(6)
-        tab.scale(1.1, 1)
-
-
-        #color options
-
-        for i in range(len(self.issue.options)):
-            the_cell = tab[i+1, -1]
-            the_cell.set_facecolor(colormap[i])
-            ax.add_patch(the_cell)
-
-
-        # highlight winners
-        for i, res in enumerate(result_list):
-            print("new res ", i)
-
-            for win in Helper.getWinner(res.normalizedRanking):
-                # Highlight the cell to draw attention to it
-
-                print(win)
-                the_cell = tab[alphabet_list.index(win) + 1, i]
-                # the_cell = tab[1, 2]
-                the_cell.set_facecolor('palegreen')
-                # the_cell.set_edgecolor('black')
-                # the_cell.set_linewidth(2)
-                the_text = the_cell.get_text()
-                # the_text.set_weight('bold')
-                # the_text.set_fontstyle('italic')
-                # the_text.set_color(highlight_text_color)
-                ax.add_patch(the_cell)
-
-        plt.savefig("table.png", dpi=300)
-
-        if (show):
-            plt.show()
-
-        return ax
-
-
-
-    def make_result_graphic(self):
-
-        plt.subplot(2, 2, 1)
-        self.print_election_plot(colorPlurality=True, show=False, scale=2)
-        plt.xticks(fontsize=6)
-        plt.yticks(fontsize=6)
-        plt.subplot(2,2,2)
-        self.print_election_plot(colorWeighted=True, show=False, scale =2)
-        plt.xticks(fontsize=6)
-        plt.yticks(fontsize=6)
-
-        self.print_result_table(show=False, ax=plt.subplot(2,1,2))
-        plt.savefig("elecGraphic.png", dpi=1000, bbox_inches='tight')
-
-        plt.show()
-
-
-    def computeBallotResult(self, kind="WR"):
-
-        if(kind == "RC"):
-            return self.computeBallotResultRC()
-        else:
-
-
-            return self.computeAdditiveResults(kind)
-
-    def computeAdditiveResults(self, kind="WR"):
-        result = Helper.getEmptyDict(list(self.agents[0].pm.keys()))
-        for ag in self.agents:
-            for opName, score in ag.getBallot(kind=kind).items():
-                result[opName] += score
-        return ElectionResult(result, kind)
-
-    def computeBallotResultRC(self):
-
-        noWinner = True
-        lostOptions = []
-        while(noWinner):
-            result = Helper.getEmptyDict(list(self.agents[0].pm.keys()))
-            for ag in self.agents:
-                result[ag.getRankedChoicePick(lostOptions)] += 1
-            winners = Helper.getWinner(result)
-            normResult = Helper.normalizeDict(result)
-            if(normResult[winners[0]] > 0.5):
-                return ElectionResult(result, "RC")
-            looser = Helper.getLooser(result)
-            if(len(looser)>1):
-                if(len(looser)==len(result)): # There is no winner and there won't be one
-                    return ElectionResult(result, "RC")
-                lostOptions.extend(looser)
-                # print("We have a tie in RC!")
-            lostOptions.append(looser[0])
-
-
-
-
-
-
-
-
-
-
-
-
-
-    def computeResult(self, kind="WR"):
-
-        if (kind == "WR"):
-            return self.computeResultWR()
-        if (kind == "WAR"):
-            return self.computeResultWAR()
-        if (kind == "AV"):
-            return self.computeResultAV()
-        if (kind == "RC"):
-            return self.computeResultRC()
-        if (kind == "PL"):
-            return self.computeResultPlurality()
-        if (kind == "WLR"):
-            return self.computeResultWLR()
-        if (kind == "WALR"):
-            return self.computeResultWAR(linear=True)
-
-    def computeResultWR(self):  # Weighted Ranking
-        common_PM = {}
-        for op in self.issue.options:
-            common_PM[op.name] = 0
-            for ag in self.agents:
-                common_PM[op.name] += ag.pm[op.name]
-
-        return ElectionResult(common_PM, "WR")
-
-    def computeResultWLR(self):  # Weighted Linear Ranking
-        common_lin_PM = {}
-        for op in self.issue.options:
-            common_lin_PM[op.name] = 0
-            for ag in self.agents:
-                common_lin_PM[op.name] += ag.linearPM[op.name]
-
-        return ElectionResult(common_lin_PM, "WLR")
-
-    def computeResultWAR(self, linear=FALSE):  # Weighted Approval Ranking
-        # print("results of weighted ranking: ")
-        shortName = "WAR"
-        if (linear):
-            shortName = "WALR"
-        common_PM = {}
-        for op in self.issue.options:
-            common_PM[op.name] = 0
-            for ag in self.agents:
-                # scale the agents pm so that the highes option is set to exactly 1:
-                highestScore = 0
-                items = ag.pm.items()
-                if (linear):
-                    items = ag.linearPM.items()
-                for (option, score) in items:
-                    if (score > highestScore):
-                        highestScore = score
-                if (linear):
-                    common_PM[op.name] += (ag.linearPM[op.name] * 1 / highestScore)
-                else:
-                    common_PM[op.name] += (ag.pm[op.name] * 1 / highestScore)
-
-        return ElectionResult(common_PM, shortName)
-
-    def computeResultPlurality(self):  # Plurality
-        voteScore = {}
-        for op in self.issue.options:
-            voteScore[op.name] = 0
-        for ag in self.agents:
-            winning_options = Helper.getWinner(ag.pm)
-            for wo in winning_options:
-                voteScore[wo] += 1 / len(winning_options)  # even though its not at all how Plurality
-            # voting works in real life it most closely resembles the result of real Plurality voting,
-            # where each voter would make a semi random choice about what option to choose
-        return ElectionResult(voteScore, "PL")
-
-    def computeResultRC(self):  # Ranked Choice
-        disregardedOptions = []
-        while (True):
-            voteScore = {}
-            for op in self.issue.options:
-                voteScore[op.name] = 0
-            for ag in self.agents:
-                # print("ag")
-                winning_options = Helper.getWinner(ag.pm, disregardedOptions=disregardedOptions)
-                for wo in winning_options:
-                    voteScore[wo] += 1 / len(winning_options)
-                    # print(voteScore, "voteScore")
-
-            voteScore = Helper.normalizeDict(voteScore)
-            # print(voteScore)
-            lowestScore = 0.9
-            lowestOption = ""
-            for (option, score) in voteScore.items():
-                if (option not in disregardedOptions):
-                    # print(option, " is not part of ", disregardedOptions)
-                    if (score < lowestScore):
-                        lowestOption = option
-                        lowestScore = score
-
-                    if (score > 0.5):
-                        return ElectionResult(voteScore, "RC")
-
-            # print(lowestOption, " was the lowest option")
-            disregardedOptions.append(lowestOption)
-
-    def computeResultAV(self, percentOfOptionsToApproveOf=0.5, cutOffScore=None):  # Approval Voting
-        if (cutOffScore != None):
-            # The cutOffScore must be given independant of the number of choices.
-            # A cutoff score of 0 means that we approve an option as long as it scores better than the mean. 0 -> 1/5
-            # A cut off score of 1 means we approve all options, one of -1 means we approve of none. 1-> 0; -1 -> 1
-            length = len(self.issue.options)
-            if (cutOffScore < 0):
-                cutOff = 1 / length - cutOffScore * (length - 1) / length
-            else:
-                cutOff = 1 / length - cutOffScore * 1 / length
-            print(cutOff, cutOffScore)
-            voteScore = {}
-            for op in self.issue.options:
-                voteScore[op.name] = 0
-            for ag in self.agents:
-                for (opName, score) in ag.pm.items():
-                    if (score >= cutOff):
-                        voteScore[opName] += 1
-            return ElectionResult(voteScore, "AV")
-
-
-
-
-        else:
-            voteScore = {}
-            for op in self.issue.options:
-                voteScore[op.name] = 0
-            for ag in self.agents:
-                approved_options = Helper.getApproved(ag.pm, percentOfOptionsToApproveOf)
-                for ao in approved_options:
-                    voteScore[ao] += 1
-            return ElectionResult(voteScore, "AV")
-
-
-class Helper:
-    dimensionNames: ["taxamount", "freedom", "environment", "schoolfunding"]
-
-    def getWinner(resultDict, disregardedOptions=[]):
-        bestOption = []
-        # print(list(resultDict.keys())[0])
-        for i in range(len(resultDict)):
-            if (list(resultDict.keys())[i] not in disregardedOptions):
-                bestOption.append(list(resultDict.keys())[i])
-                break;
-        for (option, result) in resultDict.items():
-            if (option not in disregardedOptions):
-                if (resultDict[bestOption[0]] < result):
-                    bestOption = [option]
-                if (resultDict[bestOption[0]] == result and bestOption[0] != option):
-                    bestOption.append(option)
-        return bestOption  # returns a list containing either the best option or all options that tie for best option
-
-    def getLooser(resultDict):
-        worstOptions = [list(resultDict.keys())[0]]
-        for (optionName, score) in resultDict.items():
-            if (resultDict[worstOptions[0]] > score):
-                worstOptions = [optionName]
-            if (resultDict[worstOptions[0]] == score and worstOptions[0] != optionName):
-                worstOptions.append(optionName)
-        return worstOptions  # returns a list containing either the worst option or all options that tie for worst option
-
-
-
-    def normalizeDict(dict):
-        prefs = 0
-        for (op_name, pref) in dict.items():
-            prefs += pref
-        # if prefs != len(self.agents):
-        #     print("Something went wrong with the normalization. Values added up to: ", prefs)
-        if (prefs == 0):
-            return dict
-        returnDict = {op_name: pref / prefs for op_name, pref in dict.items()}
-        return returnDict
-
-    def getApproved(diction, percentOfOprionsToApproveOf):
-        sorted_dict = dict(sorted(diction.items(), key=lambda item: item[1], reverse=True))
-        approved_options = []
-        for i in range(math.ceil(len(diction) * percentOfOprionsToApproveOf)):
-            approved_options.append(list(sorted_dict.keys())[i])
-        return approved_options
-
-    def getEmptyDict(options):
-
-        return dict(zip(options, [0] * len(options)))
-
-    def sortDictDescending(diction):
-
-        return dict(sorted(diction.items(), key=lambda item: item[1], reverse=True))
-
-
-
-def makeRandomCoordinates(numDimension, low=-dimensionSize, high=dimensionSize):
-    randomlist = []
-    for i in range(numDimension):
-        n = random.uniform(low, high)
-        randomlist.append(n)
-    return randomlist
 
 
 def makeAdjecentCoordinates(numDimension, point, standardDev=(float(dimensionSize)/5.0), low=-dimensionSize, high=dimensionSize):
@@ -729,31 +101,14 @@ def makeAdjecentCoordinates(numDimension, point, standardDev=(float(dimensionSiz
     return randomlist
 
 
-def getRandomAgents(numAgents, numDimensions, issue):
-    agents = []
-    for i in range(numAgents):
-        ag = Agent(makeRandomCoordinates(numDimensions), issue)
-        agents.append(ag)
-    return agents
+def makeRandomCoordinates(numDimension, low=-dimensionSize, high=dimensionSize):
+    randomlist = []
+    for i in range(numDimension):
+        n = random.uniform(low, high)
+        randomlist.append(n)
+    return randomlist
 
 
-def getCenterPointAgents(centerPoints, numAgents, numDimensions, issue):
-    listOfChangePoints = []
-    agents = []
-    changePoint = 0
-    for (rate, cp) in centerPoints:
-        changePoint += rate * numAgents
-        listOfChangePoints.append(changePoint)
-
-    print(listOfChangePoints)
-    for i in range(numAgents):
-        currentIndex = 0
-        for num, cp in enumerate(listOfChangePoints):
-            if (i > cp):
-                currentIndex = num + 1
-        ag = Agent(makeAdjecentCoordinates(numDimensions, centerPoints[currentIndex][1]), issue)
-        agents.append(ag)
-    return agents
 
 def happinessOfAgentWithResult(agent: Agent, result: ElectionResult)-> float:
     PM = agent.pm
@@ -799,33 +154,16 @@ def happinessOfAgentWithWinnerWeighted(agent: Agent, result: ElectionResult)-> f
 
 
 
-def initializeRandomElection(numOptions, numAgents, numDimensions):
-    return initializeElection(numOptions, numAgents, numDimensions)
 
 
-def initializeElection(numOptions, numAgents, numDimensions,
-                       centerPoints=None):  # CenterPoints is a list of tuples with likelihoods and points (points are also tuple)
-    options = []
-    for i in range(numOptions):
-        op = Option(makeRandomCoordinates(numDimensions))
-        options.append(op)
-    dimensions = []
-    for i in range(numDimensions):
-        dimensions.append("dim" + 'i')
-    issue = Issue(options, dimensions)
-
-    if (centerPoints != None):
-        agents = getCenterPointAgents(centerPoints, numAgents, numDimensions, issue)
-
-    else:
-        agents = getRandomAgents(numAgents, numDimensions, issue)
-
-    return Election(issue, agents)
 
 
-def printDict(text, dict):
-    print(text)
-    for key, value in dict.items():
-        print(key, ' : ', value)
+
+
+# def printDict(text, dict):
+#     print(text)
+#     for key, value in dict.items():
+#         print(key, ' : ', value)
+
 
 

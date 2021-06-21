@@ -1,8 +1,8 @@
 
 
 import numpy as np
-from classes import ElectionResult, Election, happinessOfAgentWithResult, initializeRandomElection, happinessOfAgentWithWinner, happinessOfAgentWithWinnerWeighted, distanceOfAgentToResult, squaredDistanceOfAgentToResult
-
+from classes import ElectionResult, happinessOfAgentWithResult, happinessOfAgentWithWinner, happinessOfAgentWithWinnerWeighted, distanceOfAgentToResult, squaredDistanceOfAgentToResult
+from Election import Election, initializeRandomElection
 
 
 def method():
@@ -17,12 +17,12 @@ def makeAHappinessPlot():
     for eval in ["dist", "sqdist", "hap", "hww", "hw"]:
         print(eval)
         for kind in ["WR", "WAR", "AV", "RC", "PL", "WLR", "WALR"]:
-            result = election.computeResult(kind)
+            result = election.computeBallotResult(kind)
 
             print(kind, computeHappinessWithResult(election, result, kind=eval))
         print("-----------------------------")
     for kind in ["WR", "WAR", "AV", "RC", "PL", "WLR", "WALR"]:
-        result = election.computeResult(kind)
+        result = election.computeBallotResult(kind)
         print(kind, computeVarianceOfHappiness(election, result))
 
 

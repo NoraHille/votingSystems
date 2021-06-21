@@ -9,8 +9,9 @@ from time import time
 
 
 
-from classes import Option, Issue, Agent, Election, Helper, initializeRandomElection, initializeElection, dimensionSize, colormap, alphabet_list, getRandomAgents, happinessOfAgentWithResult
-
+from classes import Option, Issue, Agent, dimensionSize, colormap, alphabet_list, happinessOfAgentWithResult
+from Helper import  Helper
+from Election import Election, initializeRandomElection, initializeElection
 
 #TODO
 #Methode die für eine Wahl und ein System berechnet wie viele Agenten/Optionen Paare es gibt, die mit strategischem Wählen besser fahren als ohne
@@ -34,9 +35,9 @@ def method():
     op3 = Option([-60, -70])
 
     issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-    agent = Agent([0,0], issue1)
+    agent = Agent([40,40], issue1)
 
-    sampleUnknowingStrategic(agent, issue1, 5)
+    sampleUnknowingStrategic(agent, issue1, 2)
 
 
 
@@ -74,12 +75,12 @@ def happinessWithPositionInRandomFilledElection(agent: Agent, issue: Issue, numO
     numRounds = 100000
     totalHappiness = 0
     for i in range(numRounds):
-        agents = getRandomAgents(numOtherAgents, len(issue.dimensions), issue)
+        agents = issue.getRandomAgents(numOtherAgents)
         agentsVote = copy.deepcopy(agent)
         agents.append(agentsVote)
 
         election = Election(issue, agents)
-        result = election.computeResult(kind)
+        result = election.computeBallotResult(kind)
         # how much does the agent like the result?
         totalHappiness += happinessOfAgentWithResult(agent, result)
     totalHappiness /= numRounds
@@ -105,7 +106,7 @@ def computeStratVotPosForAll():
 
 
 def computePossibilityStratVote(election: Election, kind: str):
-    result = election.computeResult(kind)
+    result = election.computeBallotResult(kind)
     winners = Helper.getWinner(result.normalizedRanking)
 
     sucOverVotes = 0
@@ -122,7 +123,7 @@ def computePossibilityStratVote(election: Election, kind: str):
             continue
         for op in election.issue.options:
             ag.setCoordinates(op.coordinates) #The agent pretends to have this option as their prefered choice
-            newResult = election.computeResult(kind)
+            newResult = election.computeBallotResult(kind)
             newWinners = Helper.getWinner(newResult.normalizedRanking)
             if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
                 sucOverVotes += 1

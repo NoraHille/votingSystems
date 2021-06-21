@@ -10,7 +10,8 @@ import math
 import string
 import random
 import pandas as pd
-from classes import Option, Issue, Agent, Election, initializeRandomElection, initializeElection
+from classes import Option, Issue, Agent
+from Election import Election,  initializeRandomElection
 from strategicVoting import generateStrategicVoting, computePossibilityStratVote
 
 
@@ -46,17 +47,18 @@ def method():
 
     agents = []
 
-    for i in range(1): #(45):
+    for i in range(2): #(45):
         agents.append(Agent([-62, 40], issue1)) #(A,C)
-    for i in range(1): #(35):
+    for i in range(3): #(35):
         agents.append(Agent([10, -40], issue1)) #(C,B)
-    for i in range(1): #(20):
+    for i in range(2): #(20):
         agents.append(Agent([10, 50], issue1)) #(B,A)
 
 
     # election = initializeRandomElection(5,100,3)
     election = Election(issue1, agents)
     election.make_result_graphic()
+    election.print_elec_table()
 #     print(agents[0].pm)
 #     print(agents[20].pm)
 #     print(agents[55].pm)
