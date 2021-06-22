@@ -9,7 +9,8 @@ from time import time
 
 
 
-from classes import Option, Issue, Agent, dimensionSize, colormap, alphabet_list, happinessOfAgentWithResult
+from classes import Option, Issue, Agent, dimensionSize, colormap, alphabet_list
+from Evaluation import  happinessOfAgentWithResult
 from Helper import  Helper
 from Election import Election, initializeRandomElection, initializeElection
 

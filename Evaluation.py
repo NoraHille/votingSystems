@@ -1,8 +1,12 @@
 
 
 import numpy as np
-from classes import ElectionResult, happinessOfAgentWithResult, happinessOfAgentWithWinner, happinessOfAgentWithWinnerWeighted, distanceOfAgentToResult, squaredDistanceOfAgentToResult
+from classes import ElectionResult
 from Election import Election, initializeRandomElection
+from agent import Agent
+from Helper import Helper
+
+
 
 
 def method():
@@ -57,6 +61,48 @@ def computeVarianceOfHappiness(election: Election, result: ElectionResult)-> flo
     return variance
 
 
+
+def happinessOfAgentWithResult(agent: Agent, result: ElectionResult)-> float:
+    PM = agent.pm
+    happiness = 0
+    for op_name in PM.keys():
+        happiness += PM[op_name]*result.normalizedRanking[op_name]
+
+    return happiness
+
+def distanceOfAgentToResult(agent: Agent, result: ElectionResult)-> float:
+    PM = agent.pm
+    distance = 0
+    for op_name in PM.keys():
+        distance += abs(PM[op_name]-result.normalizedRanking[op_name])
+
+    return distance
+
+def squaredDistanceOfAgentToResult(agent: Agent, result: ElectionResult)-> float:
+    PM = agent.pm
+    distance = 0
+    for op_name in PM.keys():
+        distance += (PM[op_name]-result.normalizedRanking[op_name])**2
+
+    return distance
+
+def happinessOfAgentWithWinner(agent: Agent, result: ElectionResult)-> float:
+    PM = agent.pm
+    winners = Helper.getWinner(result.normalizedRanking)
+    happiness = 0
+    for op_name in winners:
+        happiness += PM[op_name]
+
+    return happiness/len(winners)
+
+def happinessOfAgentWithWinnerWeighted(agent: Agent, result: ElectionResult)-> float:
+    PM = agent.pm
+    winners = Helper.getWinner(result.normalizedRanking)
+    happiness = 0
+    for op_name in winners:
+        happiness += PM[op_name]*result.normalizedRanking[op_name]
+
+    return happiness/len(winners)
 
 
 

@@ -110,48 +110,6 @@ def makeRandomCoordinates(numDimension, low=-dimensionSize, high=dimensionSize):
 
 
 
-def happinessOfAgentWithResult(agent: Agent, result: ElectionResult)-> float:
-    PM = agent.pm
-    happiness = 0
-    for op_name in PM.keys():
-        happiness += PM[op_name]*result.normalizedRanking[op_name]
-
-    return happiness
-
-def distanceOfAgentToResult(agent: Agent, result: ElectionResult)-> float:
-    PM = agent.pm
-    distance = 0
-    for op_name in PM.keys():
-        distance += abs(PM[op_name]-result.normalizedRanking[op_name])
-
-    return distance
-
-def squaredDistanceOfAgentToResult(agent: Agent, result: ElectionResult)-> float:
-    PM = agent.pm
-    distance = 0
-    for op_name in PM.keys():
-        distance += (PM[op_name]-result.normalizedRanking[op_name])**2
-
-    return distance
-
-def happinessOfAgentWithWinner(agent: Agent, result: ElectionResult)-> float:
-    PM = agent.pm
-    winners = Helper.getWinner(result.normalizedRanking)
-    happiness = 0
-    for op_name in winners:
-        happiness += PM[op_name]
-
-    return happiness/len(winners)
-
-def happinessOfAgentWithWinnerWeighted(agent: Agent, result: ElectionResult)-> float:
-    PM = agent.pm
-    winners = Helper.getWinner(result.normalizedRanking)
-    happiness = 0
-    for op_name in winners:
-        happiness += PM[op_name]*result.normalizedRanking[op_name]
-
-    return happiness/len(winners)
-
 
 
 

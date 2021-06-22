@@ -1,7 +1,8 @@
-from classes import Option, Issue, Agent, happinessOfAgentWithResult, happinessOfAgentWithWinner
+from classes import Option, Issue, Agent
 from Election import Election, initializeRandomElection, ElectionResult
 from Helper import Helper
 from strategicVoting import computePossibilityStratVote
+from Evaluation import happinessOfAgentWithResult, happinessOfAgentWithWinner
 
 
 
