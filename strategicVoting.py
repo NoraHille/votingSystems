@@ -5,14 +5,19 @@ import numpy as np
 import pandas as pd
 import random
 import copy
+import math
 from time import time
 
 
 
 from classes import Option, Issue, Agent, dimensionSize, colormap, alphabet_list
-from Evaluation import  happinessOfAgentWithResult
+from Evaluation import  happinessOfAgentWithResult, distanceOfAgentToResult, distanceOfAgentToWinner
 from Helper import  Helper
 from Election import Election, initializeRandomElection, initializeElection
+
+
+
+posDict = {0: -80, 1: -60, 2: -40, 3: -20, 4: 0, 5:20, 6:40, 7:60, 8:80}
 
 #TODO
 #Methode die für eine Wahl und ein System berechnet wie viele Agenten/Optionen Paare es gibt, die mit strategischem Wählen besser fahren als ohne
@@ -38,15 +43,56 @@ def method():
     issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
     agent = Agent([40,40], issue1)
 
-    sampleUnknowingStrategic(agent, issue1, 2)
+
+    results = []
 
 
+
+    results.append((1, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
+    results.append((1, "WAR",sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
+    results.append((1, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
+    results.append((1, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
+    election = Election(issue1, [agent])
+    election.print_election_plot()
+
+    op1 = Option([90, 90])
+    op2 = Option([20, 20])
+    op3 = Option([-90, -90])
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agent = Agent([80, 80], issue1)
+
+    results.append((2, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
+    results.append((2, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
+    results.append((2, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
+    results.append((2, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
+    election = Election(issue1, [agent])
+    election.print_election_plot()
+
+    op1 = Option([90, 90])
+    op2 = Option([20, 20])
+    op3 = Option([-90, -90])
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agent = Agent([60, 60], issue1)
+
+    results.append((3, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
+    results.append((3, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
+    results.append((3, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
+    results.append((3, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
+    election = Election(issue1, [agent])
+    election.print_election_plot()
+
+
+    for index, kind, res in results:
+        print("Election {}, {}: bestCoord: {}, bestDistance: {}, sndBestCoord: {}, sndBestDist: {}, baseDist{}".format(index, kind,
+            res[0], res[1], res[2], res[3], res[4]))
 
 
 
 # Change voting with Plurality leads to sooooo many ties it is really annoying
 
-def sampleUnknowingStrategic(agent: Agent, issue: Issue, numOtherAgents, kind="WR"):
+def sampleUnknowingStrategic(agent: Agent, issue: Issue, numOtherAgents, kind="WR", doWholeResult=False):
 
 
     #set agent on a random extreme position
@@ -56,38 +102,126 @@ def sampleUnknowingStrategic(agent: Agent, issue: Issue, numOtherAgents, kind="W
     # if higher than normal position
     #set agent on midpoint between normal pos and extreme
 
-    baseHappiness = happinessWithPositionInRandomFilledElection(agent, issue, numOtherAgents, agent.coordinates, kind=kind)
-    print("Basis: {}".format(baseHappiness))
+    baseDistance = distanceWithPositionInRandomFilledElection(agent, issue, numOtherAgents, agent.coordinates, kind=kind, doWholeResult=doWholeResult)
+    print("Basis: {}".format(baseDistance))
+
+    bestDistance = baseDistance
+    secondBestDistance = 0
+    bestCoord = agent.coordinates
+    secondBestCoord = agent.coordinates
+
+
+    breakCoord = [-1000, -1000]
+
+
+    coordinatesToTry = [op.coordinates for op in issue.options]
+    coordinatesToTry.append(breakCoord)
+
+    counter = 20
+
+    for coord in coordinatesToTry:
+        counter -= 1
+
+        print("rounds left: ", counter, coordinatesToTry)
+
+
+        if(counter< 0):
+            print("I will now end this, because my rounds are up.")
+            break
+
+        if(coord == breakCoord):
+            newCoords = calculateMiddlePosition(bestCoord, secondBestCoord)
+            if(newCoords not in coordinatesToTry):
+                coordinatesToTry.append(newCoords)
+                coordinatesToTry.append(breakCoord)
+            else:
+                print("I will now end this, because we have seen ", newCoords, "before!")
+                break
+            continue
 
 
 
-    for op in issue.options:
+
+        distance = distanceWithPositionInRandomFilledElection(agent, issue, numOtherAgents, coord, kind=kind)
+        if(distance<bestDistance):
+            print("{} is a better position and gives me {} distance".format(coord, distance))
+        else:
+            print("{} is not a better position and gives me {} distance".format(coord, distance))
+        if(distance<bestDistance):
+            secondBestDistance = bestDistance
+            secondBestCoord = bestCoord
+            bestDistance = distance
+            bestCoord = coord
+        else:
+            if (distance < secondBestDistance):
+                print("New second best!!!!!")
+                secondBestDistance = distance
+                secondBestCoord = coord
+
+    return [bestCoord, bestDistance, secondBestDistance, baseDistance]
 
 
-        happiness = happinessWithPositionInRandomFilledElection(agent, issue, numOtherAgents, op.coordinates, kind=kind)
-        if(happiness>baseHappiness):
-            print("{} is a better position and gives me {} happiness".format(op.coordinates, happiness))
+
+
+def calculateMiddlePosition(co1,co2):
+    if(len(co1)!= len(co2)):
+        print("calculateMiddlePosition: the two coordinates weren't the same length")
+    middle = []
+    for i in range(len(co1)):
+        middle.append(min(co1[i],co2[i]) + (max(co1[i], co2[i]) - min(co1[i],co2[i]))/2)
+    return middle
 
 
 
 
-
-def happinessWithPositionInRandomFilledElection(agent: Agent, issue: Issue, numOtherAgents, position, kind="WR"):
-    numRounds = 100000
-    totalHappiness = 0
+def distanceWithPositionInRandomFilledElection(agent: Agent, issue: Issue, numOtherAgents, position, kind="WR", doWholeResult=False):
+    numRounds = 81**numOtherAgents #We seperate the field into 81 distinct positions for the other agents.
+    totalDistance = 0
     for i in range(numRounds):
-        agents = issue.getRandomAgents(numOtherAgents)
+        agents = getOtherAgentsForStratVote(i, issue)
         agentsVote = copy.deepcopy(agent)
+        agentsVote.setCoordinates(position)
         agents.append(agentsVote)
 
         election = Election(issue, agents)
+
+        # if(i%125 ==0):
+        #     print(i)
+        #     election.print_election_plot(highlightAgent=3)
         result = election.computeBallotResult(kind)
         # how much does the agent like the result?
-        totalHappiness += happinessOfAgentWithResult(agent, result)
-    totalHappiness /= numRounds
-    return totalHappiness
+        totalDistance += distanceOfAgentToWinner(agent, result)
+    totalDistance /= numRounds
+    return totalDistance
+
+def getOtherAgentsForStratVote(round: int, issue):
+    [firstpos, secpos, thirdpos] = getOtherAgentsNumForStratVote(round)
+
+    return [Agent(getCoordinatesFromNum(firstpos), issue),Agent(getCoordinatesFromNum(secpos), issue),Agent(getCoordinatesFromNum(thirdpos), issue),]
 
 
+
+def getOtherAgentsNumForStratVote(round: int):
+
+
+    firstpos = round%81
+    thirdpos = int(round/6561)
+    secpos = int((round - thirdpos*6561)/81)
+
+    return [firstpos, secpos, thirdpos]
+
+
+
+
+
+def getCoordinatesFromNum(num: int):
+
+    if(num >= 81 or num < 0):
+        print("Number in getPositionsOfOtherAgents hat the wrong size.")
+    firstnum = num%9
+    secondnum = math.floor(num/9)
+
+    return [posDict[firstnum], posDict[secondnum]]
 
 
 def computeStratVotPosForAll():

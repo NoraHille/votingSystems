@@ -1,7 +1,7 @@
 from classes import Option, Issue, Agent
 from Election import Election, initializeRandomElection, ElectionResult
 from Helper import Helper
-from strategicVoting import computePossibilityStratVote
+from strategicVoting import computePossibilityStratVote, getCoordinatesFromNum, getOtherAgentsNumForStratVote, calculateMiddlePosition
 from Evaluation import happinessOfAgentWithResult, happinessOfAgentWithWinner
 
 
@@ -216,6 +216,40 @@ class TestVotingResults(unittest.TestCase):
 
         election = Election(issue1, agents)
         self.assertEqual(list(election.computeBallotResult("RC").normalizedRanking.values()),[0,0,0.6, 0.4, 0])
+
+
+    def test_option_list(self):
+
+        op1 = Option([50, 80])
+        op2 = Option([-50, 80])
+
+        issue1 = Issue([op1, op2], ["freedom", "taxes"])
+
+        ag = Agent([0, 80], issue1)
+        election = Election(issue1, [ag])
+
+        self.assertEqual(['A', 'B'], election.getOptionNameList())
+
+
+    def test_getCoordinatesFromNum(self):
+        self.assertEqual(getCoordinatesFromNum(0), [-80, -80])
+        self.assertEqual(getCoordinatesFromNum(80), [80, 80])
+        self.assertEqual(getCoordinatesFromNum(40), [0, 0])
+
+    def test_getOtherAgentsForStratVote(self):
+        self.assertEqual(getOtherAgentsNumForStratVote(0), [0,0,0])
+        self.assertEqual(getOtherAgentsNumForStratVote(531440), [80,80,80])
+        self.assertEqual(getOtherAgentsNumForStratVote(81), [0,1,0])
+        self.assertEqual(getOtherAgentsNumForStratVote(6560), [80,80,0])
+        self.assertEqual(getOtherAgentsNumForStratVote(6561), [0,0,1])
+
+    def test_calculateMiddlePosition(self):
+
+        self.assertEqual(calculateMiddlePosition([50, 50], [40, 40]), [45, 45])
+        self.assertEqual(calculateMiddlePosition([-50, 50], [40, 40]), [-5, 45])
+
+
+
 
 
 

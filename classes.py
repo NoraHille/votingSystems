@@ -40,6 +40,7 @@ class Issue(object):
             agents.append(ag)
         return agents
 
+
     def getCenterPointAgents(self, centerPoints, numAgents):
         listOfChangePoints = []
         agents = []

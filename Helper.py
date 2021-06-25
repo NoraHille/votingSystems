@@ -5,9 +5,9 @@ import math
 
 colormap = np.array(['teal', 'purple', 'yellow', 'steelblue', 'green',  'pink', 'red', 'brown', 'gray'])
 dimensionSize = 100
-alphabet_string = string.ascii_uppercase
+alphabet_string = string.ascii_uppercase + string.ascii_lowercase
 alphabet_list = list(alphabet_string)
-kindDict = {"WR": "Weighted Ranking", "WLR": "Weightes Linear Ranking", "AV": "Approval Voting", "PL": "Plurality Voting", "WAR": "Weighted Approval Ranking", "WALR": "Weighted Approval Linear Ranking", "RC": "Ranked Choice"}
+kindDict = {"WR": "Weighted Ranking", "WLR": "Weightes Linear Ranking", "AV": "Approval Voting", "PL": "Plurality Voting", "WAR": "Weighted Approval Ranking", "WALR": "Weighted Approval Linear Ranking", "RC": "Ranked Choice", "tie": "Base Tie"}
 
 
 

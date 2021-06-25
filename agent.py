@@ -7,13 +7,16 @@ import copy
 
 class Agent(object):
     def __init__(self, coordinates, issue):
-        self.issue = issue
+        self.setIssue(issue)
         self.setCoordinates(coordinates)
 
     def setCoordinates(self, coordinates):
         self.coordinates = coordinates  # coordinates is a list of real numbers, each number being associated with a dimension in the issue
         self.pm = self.create_PM(self.issue)
         self.linearPM = self.create_linear_PM(self.issue)
+
+    def setIssue(self, issue):
+        self.issue = issue
 
     def create_PM(self, issue):
         pm = {}

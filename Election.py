@@ -15,9 +15,18 @@ from agent import Agent
 
 
 class Election:
-    def __init__(self, issue, agents):
+    def __init__(self, issue, agents, agentBlocks= None):
         self.issue = issue
         self.agents = agents
+        self.agentBlocks = agentBlocks
+
+
+    def makeElectionWithAgentBlocks(self, issue, agentBlocks):
+        agents = []
+        for ab in agentBlocks:
+            agents.extend(ab.agents)
+        return Election(issue, agents, agentBlocks)
+        pass
 
     def computeAllResults(self):
         result_list = []
@@ -34,7 +43,10 @@ class Election:
 
         return result_list
 
-    def print_election_plot(self, show=True, highlightAgent=None, colorPlurality=False, colorWeighted=False, linear=False, scale=1):
+    def getOptionNameList(self):
+        return list(self.agents[0].pm.keys())
+
+    def print_election_plot(self, show=True, highlightAgent: int=None, colorPlurality=False, colorWeighted=False, linear=False, scale=1):
 
         if (len(self.issue.dimensions) != 2):
             print("You tried to plot an election with more/less than 2 dimensions, namely ", len(self.issue.dimensions))
@@ -44,8 +56,8 @@ class Election:
         ag_y = []
         agentCat = []
         for ag in self.agents:
-            if (len(Helper.getWinner(ag.pm)) > 1):
-                print("an agent is torn between multiple options!")
+            # if (len(Helper.getWinner(ag.pm)) > 1):
+            #     print("an agent is torn between multiple options!")
             choice = Helper.getWinner(ag.pm)[0]
             optionNameList = [op.name for op in self.issue.options]
             choiceID = optionNameList.index(choice)
@@ -148,8 +160,12 @@ class Election:
         plt.xlim([-dimensionSize, dimensionSize])
         plt.ylim([-dimensionSize, dimensionSize])
 
+        plt.savefig("elecPlot{}.png".format(int(time())), dpi=300)
+
         if (show):
             plt.show()
+
+
 
     def print_elec_table(self):
 
@@ -181,7 +197,7 @@ class Election:
 
 
 
-    def print_result_table(self, rounded=True, show=True, ax=None):
+    def print_result_table(self, title= "", rounded=True, show=True, ax=None):
 
         result_list = self.computeAllResults()
 
@@ -241,6 +257,7 @@ class Election:
         plt.savefig("table.png", dpi=300)
 
         if (show):
+            plt.title(title)
             plt.show()
 
         return ax
@@ -287,6 +304,8 @@ class Election:
         while(noWinner):
             result = Helper.getEmptyDict(list(self.agents[0].pm.keys()))
             for ag in self.agents:
+                if(ag.getRankedChoicePick(lostOptions) == None):
+                    pass
                 result[ag.getRankedChoicePick(lostOptions)] += 1
             winners = Helper.getWinner(result)
             normResult = Helper.normalizeDict(result)
@@ -297,6 +316,8 @@ class Election:
                 if(len(looser)==len(result)): # There is no winner and there won't be one
                     return ElectionResult(result, "RC")
                 lostOptions.extend(looser)
+                if (len(lostOptions) == len(result)):  # There is no winner and there won't be one
+                    return ElectionResult(result, "RC")
                 # print("We have a tie in RC!")
             lostOptions.append(looser[0])
 
@@ -453,14 +474,8 @@ def initializeRandomElection(numOptions, numAgents, numDimensions):
 
 def initializeElection(numOptions, numAgents, numDimensions,
                        centerPoints=None):  # CenterPoints is a list of tuples with likelihoods and points (points are also tuple)
-    options = []
-    for i in range(numOptions):
-        op = Option(makeRandomCoordinates(numDimensions))
-        options.append(op)
-    dimensions = []
-    for i in range(numDimensions):
-        dimensions.append("dim" + 'i')
-    issue = Issue(options, dimensions)
+
+    issue = makeIssue(makeRandomOptions(numOptions, numDimensions), numDimensions)
 
     if (centerPoints != None):
         agents = issue.getCenterPointAgents(centerPoints, numAgents)
@@ -469,3 +484,20 @@ def initializeElection(numOptions, numAgents, numDimensions,
         agents = issue.getRandomAgents(numAgents)
 
     return Election(issue, agents)
+
+def makeRandomOptions(numOptions, numDimensions):
+    options = []
+    for i in range(numOptions):
+        op = Option(makeRandomCoordinates(numDimensions))
+        options.append(op)
+
+    return options
+
+def makeIssue(options, numDimensions):
+
+    dimensions = []
+    for i in range(numDimensions):
+        dimensions.append("dim" + 'i')
+    issue = Issue(options, dimensions)
+    return issue
+
