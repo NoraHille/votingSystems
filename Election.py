@@ -21,12 +21,8 @@ class Election:
         self.agentBlocks = agentBlocks
 
 
-    def makeElectionWithAgentBlocks(self, issue, agentBlocks):
-        agents = []
-        for ab in agentBlocks:
-            agents.extend(ab.agents)
-        return Election(issue, agents, agentBlocks)
-        pass
+
+
 
     def computeAllResults(self):
         result_list = []
@@ -215,11 +211,11 @@ class Election:
             data.append([round(num, 3) for num in list(res.normalizedRanking.values())])
         #     data.append([round(abs, 3) + "(" + round(rel, 3) + ")" for num, rel in zip(list(res.ranking.values()), list(res.normalizedRanking.values()))])
         data = np.array(data).T.tolist()
-        print(data)
+        # print(data)
         df = pd.DataFrame(data, columns=column_labels)
         ax.axis('tight')
         ax.axis('off')
-        print(list(result_list[0].ranking.keys()))
+        # print(list(result_list[0].ranking.keys()))
         tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=list(result_list[0].ranking.keys()),
                        loc="center")
         tab.auto_set_font_size(False)
@@ -237,12 +233,11 @@ class Election:
 
         # highlight winners
         for i, res in enumerate(result_list):
-            print("new res ", i)
+            # print("new res ", i)
 
             for win in Helper.getWinner(res.normalizedRanking):
                 # Highlight the cell to draw attention to it
 
-                print(win)
                 the_cell = tab[alphabet_list.index(win) + 1, i]
                 # the_cell = tab[1, 2]
                 the_cell.set_facecolor('palegreen')
@@ -319,7 +314,11 @@ class Election:
                 if (len(lostOptions) == len(result)):  # There is no winner and there won't be one
                     return ElectionResult(result, "RC")
                 # print("We have a tie in RC!")
-            lostOptions.append(looser[0])
+            else:
+                lostOptions.append(looser[0])
+            if (len(lostOptions) == len(result)):  # There is no winner and there won't be one
+                print("Something went wrong in computeBallotResultRC")
+                return ElectionResult(result, "RC")
 
 
 
@@ -330,7 +329,7 @@ class Election:
 
 
 
-#Old methods for computing results:
+            #Old methods for computing results:
 
 
     # def computeResult(self, kind="WR"):
@@ -501,3 +500,8 @@ def makeIssue(options, numDimensions):
     issue = Issue(options, dimensions)
     return issue
 
+def makeElectionWithAgentBlocks(issue, agentBlocks):
+    agents = []
+    for ab in agentBlocks:
+        agents.extend(ab.agents)
+    return Election(issue, agents, agentBlocks)

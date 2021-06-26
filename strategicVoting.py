@@ -36,17 +36,24 @@ def method():
     print("HI")
     # generateStrategicChangeVoting(kind="RC", numOptions=5, numAgents=3, iter=1000)
 
+
+
+
+
+
+# Change voting with Plurality leads to sooooo many ties it is really annoying
+
+
+def incompleteKnowledgeWith5ExampleElecs():
+
+    results = []
+
     op1 = Option([50, 50])
     op2 = Option([-50, -80])
     op3 = Option([-60, -70])
 
     issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
     agent = Agent([40,40], issue1)
-
-
-    results = []
-
-
 
     results.append((1, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
     results.append((1, "WAR",sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
@@ -83,14 +90,38 @@ def method():
     election = Election(issue1, [agent])
     election.print_election_plot()
 
+    op1 = Option([90, 90])
+    op2 = Option([-20, -20])
+    op3 = Option([70, 90])
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agent = Agent([60, 60], issue1)
+
+    results.append((4, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
+    results.append((4, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
+    results.append((4, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
+    results.append((4, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
+    election = Election(issue1, [agent])
+    election.print_election_plot()
+
+    op1 = Option([90, 90])
+    op2 = Option([-20, -20])
+    op3 = Option([45, 90])
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agent = Agent([70, 90], issue1)
+
+    results.append((5, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
+    results.append((5, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
+    results.append((5, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
+    results.append((5, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
+    election = Election(issue1, [agent])
+    election.print_election_plot()
+
 
     for index, kind, res in results:
         print("Election {}, {}: bestCoord: {}, bestDistance: {}, sndBestCoord: {}, sndBestDist: {}, baseDist{}".format(index, kind,
             res[0], res[1], res[2], res[3], res[4]))
-
-
-
-# Change voting with Plurality leads to sooooo many ties it is really annoying
 
 def sampleUnknowingStrategic(agent: Agent, issue: Issue, numOtherAgents, kind="WR", doWholeResult=False):
 
@@ -131,6 +162,7 @@ def sampleUnknowingStrategic(agent: Agent, issue: Issue, numOtherAgents, kind="W
 
         if(coord == breakCoord):
             newCoords = calculateMiddlePosition(bestCoord, secondBestCoord)
+            print("from {} and {} I make {}".format(bestCoord, secondBestCoord, newCoords))
             if(newCoords not in coordinatesToTry):
                 coordinatesToTry.append(newCoords)
                 coordinatesToTry.append(breakCoord)
@@ -158,7 +190,7 @@ def sampleUnknowingStrategic(agent: Agent, issue: Issue, numOtherAgents, kind="W
                 secondBestDistance = distance
                 secondBestCoord = coord
 
-    return [bestCoord, bestDistance, secondBestDistance, baseDistance]
+    return [bestCoord, bestDistance, secondBestCoord, secondBestDistance, baseDistance]
 
 
 
@@ -190,7 +222,10 @@ def distanceWithPositionInRandomFilledElection(agent: Agent, issue: Issue, numOt
         #     election.print_election_plot(highlightAgent=3)
         result = election.computeBallotResult(kind)
         # how much does the agent like the result?
-        totalDistance += distanceOfAgentToWinner(agent, result)
+        if(doWholeResult):
+            totalDistance += distanceOfAgentToResult(agent, result)
+        else:
+            totalDistance += distanceOfAgentToWinner(agent, result)
     totalDistance /= numRounds
     return totalDistance
 

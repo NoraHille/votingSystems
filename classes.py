@@ -49,14 +49,14 @@ class Issue(object):
             changePoint += rate * numAgents
             listOfChangePoints.append(changePoint)
 
-        print(listOfChangePoints)
         for i in range(numAgents):
             currentIndex = 0
             for num, cp in enumerate(listOfChangePoints):
                 if (i > cp):
                     currentIndex = num + 1
-            ag = Agent(makeAdjecentCoordinates(self.numDimensions(), centerPoints[currentIndex][1]), self)
+            ag = makeAdjecentCoordinates(self.numDimensions(), centerPoints[currentIndex][1])
             agents.append(ag)
+        print(agents)
         return agents
 
 
@@ -108,6 +108,15 @@ def makeRandomCoordinates(numDimension, low=-dimensionSize, high=dimensionSize):
         n = random.uniform(low, high)
         randomlist.append(n)
     return randomlist
+
+def makeRandomOptions(numDimesions, numOp):
+
+    options = []
+
+    for i in range(numOp):
+        options.append(Option(makeRandomCoordinates(numDimesions)))
+    return options
+
 
 
 

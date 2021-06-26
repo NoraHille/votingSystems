@@ -13,10 +13,14 @@ import pandas as pd
 from classes import Option, Issue, Agent
 from Election import Election,  initializeRandomElection
 from strategicVoting import generateStrategicVoting, computePossibilityStratVote
+from exampleElections import make_Election_1
 
 
 
 def method():
+
+
+    make_Election_1()
 
     # election = initializeElection(5, 100, 2, centerPoints=[(0.4, (5,5)), (0.3, (-30,-90)), (0.2, (-60,90)), (0.1, (80, -25))])
     # # election = initializeRandomElection(4, 500, 2)
@@ -39,26 +43,26 @@ def method():
 
 
 # Example for Arrows Theorem:
-    op1 = Option([-70,50]) #X A
-    op2 = Option([70, 50]) #Z B
-    op3 = Option([0, -50]) #Y C
-
-    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-
-    agents = []
-
-    for i in range(2): #(45):
-        agents.append(Agent([-62, 40], issue1)) #(A,C)
-    for i in range(3): #(35):
-        agents.append(Agent([10, -40], issue1)) #(C,B)
-    for i in range(2): #(20):
-        agents.append(Agent([10, 50], issue1)) #(B,A)
+#     op1 = Option([-70,50]) #X A
+#     op2 = Option([70, 50]) #Z B
+#     op3 = Option([0, -50]) #Y C
+#
+#     issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+#
+#     agents = []
+#
+#     for i in range(2): #(45):
+#         agents.append(Agent([-62, 40], issue1)) #(A,C)
+#     for i in range(3): #(35):
+#         agents.append(Agent([10, -40], issue1)) #(C,B)
+#     for i in range(2): #(20):
+#         agents.append(Agent([10, 50], issue1)) #(B,A)
 
 
     # election = initializeRandomElection(5,100,3)
-    election = Election(issue1, agents)
-    election.make_result_graphic()
-    election.print_elec_table()
+    # election = Election(issue1, agents)
+    # election.make_result_graphic()
+    # election.print_elec_table()
 #     print(agents[0].pm)
 #     print(agents[20].pm)
 #     print(agents[55].pm)
