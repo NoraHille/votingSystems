@@ -24,8 +24,8 @@ def method():
 
 
 
-    election = make_strat_Election_1()
-    # election.make_result_graphic()
+    election = make_Election_1()
+    election.make_result_graphic()
 
 
 

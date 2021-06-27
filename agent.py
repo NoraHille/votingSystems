@@ -142,6 +142,12 @@ class Agent(object):
             dist += pow(self.coordinates[i] - option.coordinates[i], 2)
         return math.sqrt(dist)
 
+    def computeDistancePoint(self, point):
+        dist = 0;
+        for i in range(len(self.coordinates)):
+            dist += pow(self.coordinates[i] - point[i], 2)
+        return math.sqrt(dist)
+
 
 
     def getBallot(self, kind="WR"):

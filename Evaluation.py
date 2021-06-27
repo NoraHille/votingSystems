@@ -12,23 +12,21 @@ import pandas as pd
 
 
 evalKindDict = {"dist": "Distance to result", "sqdist": "Squared distance to result", "hap": "Happiness with result", "distw": "Distance to winner", "hww": "Weighted happiness with winner", "hw": "Happiness with winner"}
-eval_list = ["dist"]
+# eval_list = ["dist"]
 # eval_list = ["dist", "sqdist", "rtdist", "hap", "distw", "hww", "hw"]
-# eval_list = ["dist", "sqdist", "rtdist", "hap", "distw", "hww", "hw"]
-kind_list = ["RC"]
+eval_list = ["dist", "sqdist", "rtdist", "hap", "distw", "hww", "hw", "GS"]
+# kind_list = ["RC"]
 # kind_list = ["WR", "WAR", "AV", "RC", "PL"]
-# kind_list = ["WR", "WAR", "AV", "RC", "PL", "WALR", "WLR", "GR"]
+kind_list = ["WR", "WAR", "AV", "RC", "PL", "WALR", "WLR", "GR"]
 
 
 def method():
     print("HI")
-    makeAHappinessTable(5, 1000, 2, numElec=1, makePlot=True, show=False)
+    makeAHappinessTable(5, 100, 2, numElec=100, makePlot=False, show=True)
 
 
 
 def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, show = True, makePlot=False ):
-
-
 
     kinds_for_eval_list = ["tie"]
     kinds_for_eval_list.extend(kind_list)
@@ -38,9 +36,9 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
 
     for i in range(numElec):
         # election = initializeElection(numOptions,numAgents,numDim, centerPoints=[(0.4, (5,5)), (0.3, (-30,-90)), (0.2, (-60,90)), (0.1, (80, -25))])
-        # election = initializeElection(numOptions,numAgents,numDim)
+        election = initializeElection(numOptions,numAgents,numDim)
         # election = make_equal_elec(numOptions, numAgents, numDim)
-        election = make_Election_1()
+        # election = make_Election_1()
         happiness = {}
         variance = {}
 
@@ -63,7 +61,7 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
                     linear = True
 
                 happiness[eval].append(computeHappinessWithResult(election, result, kind=eval,makePlot=makePlot, linear=linear))
-                # variance[eval].append(computeVarianceOfHappiness(election, result, kind=eval, linear=linear))
+                variance[eval].append(computeVarianceOfHappiness(election, result, kind=eval, linear=linear))
 
         happDict_list.append(happiness)
         varDict_list.append(variance)
@@ -123,6 +121,11 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
 
 def computeHappinessWithResult(election: Election, result: ElectionResult, kind="dist", makePlot=False, linear=False)-> float:
 
+
+    if(kind=="GS"): #closeness to graphic solution
+        return closenessToGraphicSolution(election, result)
+
+
     totalHappiness = 0
     agHappiness = 0
 
@@ -180,6 +183,9 @@ def computeHappinessWithResult(election: Election, result: ElectionResult, kind=
 
 def computeVarianceOfHappiness(election: Election, result: ElectionResult, kind="dist", linear=False)-> float:
 
+    if(kind=="GS"): #closeness to graphic solution
+        return -1
+
     mu = computeHappinessWithResult(election, result, kind=kind, linear=linear)/len(election.agents)
 
     variance = 0
@@ -203,6 +209,14 @@ def computeVarianceOfHappiness(election: Election, result: ElectionResult, kind=
             variance += (distanceOfAgentToWinner(agent, result, linear=linear) - mu) ** 2
 
     return variance/agentNum
+
+def closenessToGraphicSolution(elec: Election, result: ElectionResult):
+    grres = elec.computeGraphicWithOutlierPunishing()
+    totalDist = 0
+    for opName, score in grres.normalizedRanking.items():
+        totalDist+= abs(result.normalizedRanking[opName]-score)
+    return totalDist
+
 
 
 

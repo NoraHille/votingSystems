@@ -34,7 +34,7 @@ class Election:
         # result_list.append(self.computeResultWAR())
         # result_list.append(self.computeResultWAR(linear=True))
 
-        for kind in ["PL", "RC", "AV", "WR", "WAR", "WLR", "GR", "HR", "HLR", "Dist"]:
+        for kind in ["PL", "RC", "AV", "WR", "WAR", "WLR", "GR", "GRP", "HR", "HLR", "Dist"]:
             result_list.append(self.computeBallotResult(kind=kind))
 
         return result_list
@@ -294,7 +294,9 @@ class Election:
         if(kind == "RC"):
             return self.computeBallotResultRC()
         if(kind == "GR"):
-            return self.computeMiddleCoordOfAgents()
+            return self.computeGraphic()
+        if (kind == "GRP"):
+            return self.computeGraphicWithOutlierPunishing()
         else:
 
 
@@ -308,12 +310,39 @@ class Election:
         return ElectionResult(result, kind)
 
     def computeMiddleCoordOfAgents(self):
-        middleCords = [0]*len(self.issue.dimensions)
+
+        middleCords = [0] * len(self.issue.dimensions)
         for i in range(len(self.issue.dimensions)):
             for ag in self.agents:
-                middleCords[i] += ag.coordinates[i]/len(self.agents)
+                middleCords[i] += ag.coordinates[i] / len(self.agents)
+        return middleCords
+
+    def computeGraphic(self):
+        middleCords = self.computeMiddleCoordOfAgents()
+
         agent = Agent(middleCords, self.issue)
         return ElectionResult(agent.linearPM, "GR")
+
+    def computeGraphicWithOutlierPunishing(self):
+        middleCoords = self.computeMiddleCoordOfAgents()
+        newPoints = []
+        for ag in self.agents:
+            dist = ag.computeDistancePoint(middleCoords)
+            dist = dist**0.5
+            newPoint = [middleCoords[i] + (ag.coordinates[i] - middleCoords[i])*dist for i in range(len(middleCoords))]
+            newPoints.append(newPoint)
+
+        trueMiddleCords = [0] * len(self.issue.dimensions)
+        for i in range(len(self.issue.dimensions)):
+            for newPoint in newPoints:
+                trueMiddleCords[i] += newPoint[i] / len(newPoints)
+        agent = Agent(trueMiddleCords, self.issue)
+        return ElectionResult(agent.linearPM, "GRP")
+
+
+
+
+        return ElectionResult(agent.linearPM, "GRP")
 
 
 
