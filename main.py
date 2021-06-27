@@ -10,17 +10,24 @@ import math
 import string
 import random
 import pandas as pd
-from classes import Option, Issue, Agent
-from Election import Election,  initializeRandomElection
+from classes import Option, Issue
+from agentBlock import AgentBlock
+from agent import Agent
+from Helper import Helper
+from Election import Election,  initializeRandomElection, makeElectionWithAgentBlocks
 from strategicVoting import generateStrategicVoting, computePossibilityStratVote
-from exampleElections import make_Election_1
+from exampleElections import make_Election_1, make_small_Election, make_small_Election_1, make_circle_Election, make_spreaded_circle_Election, make_outlier_circle_Election, make_strat_Election_1
 
 
 
 def method():
 
 
-    make_Election_1()
+
+    election = make_strat_Election_1()
+    # election.make_result_graphic()
+
+
 
     # election = initializeElection(5, 100, 2, centerPoints=[(0.4, (5,5)), (0.3, (-30,-90)), (0.2, (-60,90)), (0.1, (80, -25))])
     # # election = initializeRandomElection(4, 500, 2)
@@ -57,10 +64,34 @@ def method():
 #         agents.append(Agent([10, -40], issue1)) #(C,B)
 #     for i in range(2): #(20):
 #         agents.append(Agent([10, 50], issue1)) #(B,A)
+def difference_of_Weighted_VS():
+    election = make_circle_Election()
+    election.make_result_graphic()
+    election.print_elec_table()
+    election.print_elec_table(true=True)
+    election.print_elec_table(linear=True)
+    election.print_elec_table(trueLin=True)
+    election.print_elec_table(dist=True)
+
+    election = make_spreaded_circle_Election()
+    election.make_result_graphic()
+    election.print_elec_table()
+    election.print_elec_table(true=True)
+    election.print_elec_table(linear=True)
+    election.print_elec_table(trueLin=True)
+    election.print_elec_table(dist=True)
+
+    election = make_outlier_circle_Election()
+    election.make_result_graphic()
+    election.print_elec_table()
+    election.print_elec_table(true=True)
+    election.print_elec_table(linear=True)
+    election.print_elec_table(trueLin=True)
+    election.print_elec_table(dist=True)
 
 
-    # election = initializeRandomElection(5,100,3)
-    # election = Election(issue1, agents)
+    # election = initializeRandomElection(5,100,2)
+    # # election = Election(issue1, agents)
     # election.make_result_graphic()
     # election.print_elec_table()
 #     print(agents[0].pm)

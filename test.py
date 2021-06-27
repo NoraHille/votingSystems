@@ -1,5 +1,6 @@
+from agentBlock import AgentBlock
 from classes import Option, Issue, Agent
-from Election import Election, initializeRandomElection, ElectionResult
+from Election import Election, initializeRandomElection, ElectionResult, makeElectionWithAgentBlocks
 from Helper import Helper
 from strategicVoting import computePossibilityStratVote, getCoordinatesFromNum, getOtherAgentsNumForStratVote, calculateMiddlePosition
 from Evaluation import happinessOfAgentWithResult, happinessOfAgentWithWinner
@@ -169,7 +170,7 @@ class TestVotingResults(unittest.TestCase):
             agents.append(Agent([10, 50], issue1))  # (B,A)
         election = Election(issue1, agents)
         self.assertEqual([0.65, 0.0, 0.35], [round(v,2) for (k,v) in election.computeBallotResult("RC").normalizedRanking.items()])
-        self.assertEqual([0.33, 0.28, 0.4], [round(v,2) for (k,v) in election.computeBallotResult("AV").normalizedRanking.items()])
+        self.assertEqual([0.45, 0.2, 0.35], [round(v,2) for (k,v) in election.computeBallotResult("AV", ).normalizedRanking.items()])
 
     def test_RC_and_AV_2(self):
         op1 = Option([34, 67])  # X A
@@ -189,7 +190,20 @@ class TestVotingResults(unittest.TestCase):
         election = Election(issue1, agents)
         self.assertEqual([round(v,5) for (k,v) in election.computeBallotResult("RC").normalizedRanking.items()], [round(v,5) for (k,v) in election.computeBallotResult("RC").normalizedRanking.items()])
         self.assertEqual([round(v,5) for (k,v) in election.computeBallotResult("AV").normalizedRanking.items()], [round(v,5) for (k,v) in election.computeBallotResult("AV").normalizedRanking.items()])
+    def test_AV(self):
+        op1 = Option([-70, 80])  # A
+        op2 = Option([70, 80])  # B
+        op3 = Option([20, -40])  # C
 
+        issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+        agents = []
+        agents.append(Agent([0, 80], issue1))
+        agents.append(Agent([10, 80], issue1))
+        agents.append(Agent([45, 20], issue1))
+        agents.append(Agent([60, 80], issue1))
+        el = Election(issue1, agents)
+        self.assertEqual([2.0,4.0,1.0],
+                         [round(v, 5) for (k, v) in el.computeBallotResult("AV").ranking.items()])
 
     def test_RC_with_mult_levels(self):
 
@@ -247,6 +261,25 @@ class TestVotingResults(unittest.TestCase):
 
         self.assertEqual(calculateMiddlePosition([50, 50], [40, 40]), [45, 45])
         self.assertEqual(calculateMiddlePosition([-50, 50], [40, 40]), [-5, 45])
+
+    def test_agentBlock(self):
+        op1 = Option([-70, 80])  # A
+        op2 = Option([70, 80])  # B
+        op3 = Option([20, -80])  # C
+        op4 = Option([50, -80])  # D
+
+        issue1 = Issue([op1, op2, op3, op4], ["freedom", "taxes"])
+        agent = Agent([50, -80], issue1)
+        agentBlock = AgentBlock(agent, 20)
+        election = makeElectionWithAgentBlocks(issue1, [agentBlock])
+        res = election.computeBallotResult(kind="PL")
+        winner1 = Helper.getWinner(res.normalizedRanking)
+        agentBlock.changeCoordinates([-70, 80])
+        res = election.computeBallotResult(kind="PL")
+        winner2 = Helper.getWinner(res.normalizedRanking)
+
+        self.assertEqual(['D'], winner1)
+        self.assertEqual(['A'], winner2)
 
 
 

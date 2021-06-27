@@ -14,6 +14,7 @@ from classes import Option, Issue, Agent, dimensionSize, colormap, alphabet_list
 from Evaluation import  happinessOfAgentWithResult, distanceOfAgentToResult, distanceOfAgentToWinner
 from Helper import  Helper
 from Election import Election, initializeRandomElection, initializeElection
+from exampleElections import make_small_Election_1, make_Election_1, make_strat_Election_1, make_strat_Election_2, make_app_strat_Election
 
 
 
@@ -35,6 +36,8 @@ posDict = {0: -80, 1: -60, 2: -40, 3: -20, 4: 0, 5:20, 6:40, 7:60, 8:80}
 def method():
     print("HI")
     # generateStrategicChangeVoting(kind="RC", numOptions=5, numAgents=3, iter=1000)
+
+    stratVotPosStats()
 
 
 
@@ -258,21 +261,48 @@ def getCoordinatesFromNum(num: int):
 
     return [posDict[firstnum], posDict[secondnum]]
 
+def stratVotPosStats(rounds=1000):
+    numAg = 20
+    numOp = 5
 
-def computeStratVotPosForAll():
-    election = initializeRandomElection(5, 4, 2)
-    goOn = True
-    while(goOn):
-        # for kind in ["WR", "WAR", "AV", "RC", "PL", "WLR", "WALR"]:
-        for kind in ["WR"]:
+    resultDict = {}
+    for i in range(rounds):
+        election = initializeRandomElection(numOp, numAg, 2)
+        newDict = computeStratVotPosForAll(election)
+        for (kind, dicti) in newDict.items():
+            if( kind not in resultDict):
+                resultDict[kind] = {"Over voters": 0, "Change voters": 0, "failed": 0, "didn't try": 0}
+            for k, value in dicti.items():
+                resultDict[kind][k] += value
+    total = numOp*numAg*rounds
+    for kind, dicti in resultDict.items():
+        innerTotal = dicti["failed"] + dicti["Change voters"] + dicti["Over voters"] + dicti["didn't try"]
+        if(innerTotal != total):
+            print("total {} and innerTotal {} don't match in StatVotPosStats!".format(total, innerTotal))
+        totalAttemps = dicti["failed"] + dicti["Change voters"] + dicti["Over voters"]
+        attemptRate = totalAttemps/total
+        failed = dicti["failed"]/totalAttemps * 100
+        change = dicti["Change voters"]/totalAttemps * 100
+        over = dicti["Over voters"]/totalAttemps * 100
 
-            stratPos = computePossibilityStratVote(election, kind="PL")
-            if (stratPos['Over voters:'] > 0 or goOn == False):
+        print("In {} unhappy voters failed {} %, overvoted {} % and changevoted {} % of the time. Attemptrate = {}. Nr of attemps: {}".format(kind, failed, over, change, attemptRate, totalAttemps))
 
-                print(kind, stratPos)
 
-                election.make_result_graphic()
-                goOn = False
+
+
+
+def computeStratVotPosForAll(election=None):
+    if(election==None):
+        election = initializeRandomElection(5, 4, 2)
+    dicti= {}
+    for kind in ["AV", "WR", "WAR", "RC", "PL"]:
+        # for kind in ["WR"]:
+        stratPos = computePossibilityStratVote(election, kind=kind)
+            # if (stratPos['Over voters:'] > 0 or goOn == False):
+        dicti[kind] = stratPos
+        # print(kind, stratPos)
+    return dicti
+
 
 
 def computePossibilityStratVote(election: Election, kind: str):
@@ -291,18 +321,23 @@ def computePossibilityStratVote(election: Election, kind: str):
         if(any(win in winners for win in personalWinners)): # Agent is already happy with the result -> no strat vote necessary
             contendet += len(election.issue.options)
             continue
-        for op in election.issue.options:
-            ag.setCoordinates(op.coordinates) #The agent pretends to have this option as their prefered choice
-            newResult = election.computeBallotResult(kind)
-            newWinners = Helper.getWinner(newResult.normalizedRanking)
-            if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
-                sucOverVotes += 1
-                continue
-            if(resultImproved(PM, winners, newWinners)): #The Agent could improve their happiness with the result
-                sucChangeVotes +=1
-                continue
-            failedStratVotes +=1 #The Agent could not improve the result of the vote through strat voting
-        ag.setCoordinates(coordinates) #We set the agent to the old coordinates
+        else:
+            for num, op in enumerate(election.issue.options):
+                if (kind == "AV"):
+                    ag.setNumApp(num + 1)
+                else:
+                    ag.setCoordinates(op.coordinates) #The agent pretends to have this option as their prefered choice
+                newResult = election.computeBallotResult(kind)
+                newWinners = Helper.getWinner(newResult.normalizedRanking)
+                if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
+                    sucOverVotes += 1
+                    continue
+                if(resultImproved(PM, winners, newWinners)): #The Agent could improve their happiness with the result
+                    sucChangeVotes +=1
+                    continue
+                failedStratVotes +=1 #The Agent could not improve the result of the vote through strat voting
+            ag.setCoordinates(coordinates) #We set the agent to the old coordinates
+            ag.setNumApp(None)
 
     sumOfLogged = sucOverVotes + sucChangeVotes + failedStratVotes + contendet
     sumOfTuples = len(election.agents)* len(election.issue.options)
@@ -310,7 +345,7 @@ def computePossibilityStratVote(election: Election, kind: str):
     if(sumOfLogged!= sumOfTuples):
         print("The number of logged votes doesn't match.")
 
-    return {"Over voters:": sucOverVotes, "Change voters:":  sucChangeVotes, "failed: ": failedStratVotes, "didn't try: ":contendet}
+    return {"Over voters": sucOverVotes, "Change voters":  sucChangeVotes, "failed": failedStratVotes, "didn't try":contendet}
 
 
 

@@ -1,4 +1,4 @@
-from Helper import Helper
+from Helper import Helper, dimensionSize
 import numpy as np
 import string
 import random
@@ -9,11 +9,25 @@ class Agent(object):
     def __init__(self, coordinates, issue):
         self.setIssue(issue)
         self.setCoordinates(coordinates)
+        self.base = 1/len(issue.options)
+        self.numApp = None
 
     def setCoordinates(self, coordinates):
         self.coordinates = coordinates  # coordinates is a list of real numbers, each number being associated with a dimension in the issue
         self.pm = self.create_PM(self.issue)
         self.linearPM = self.create_linear_PM(self.issue)
+        self.truelinPM = self.create_true_linear_PM(self.issue)
+        self.truePM = self.create_true_PM(self.issue)
+        self.distPM = self.create_distance_PM(self.issue)
+
+    def setNumApp(self, num):
+        if(num == -1 or num == None):
+            self.numApp = None
+            return
+        if(num<= len(self.issue.options)):
+            self.numApp = num
+        else:
+            print("wrong numApp length in setNumApp")
 
     def setIssue(self, issue):
         self.issue = issue
@@ -38,6 +52,38 @@ class Agent(object):
         # if(sum_of_preferences != 1):
         # print("Something went wrong with the normalization, the normalized value is ", sum_of_preferences)
         # print("The PM of an agent is: ", pm)
+        return pm
+
+    def create_true_PM(self, issue):
+        pm = {}
+        normalization_faktor = 0;
+        for op in issue.options:
+
+            dist = self.computeDistance(op)
+            if (dist == 0):
+                dist = 0.0000000000000000000000001
+            pref = pow(dist, -1)  # raise to the power of -1 to make agents prefer the option with the lowest distance
+            pm[op.name] = pref;
+
+        return pm
+
+    def create_true_linear_PM(self, issue):
+        pm = {}
+        sumOfDist = 0;
+        for op in issue.options:
+
+            dist = self.computeDistance(op)
+            if (dist == 0):
+                dist = 0.0000000001
+            pref = dist
+            pm[op.name] = pref;
+            sumOfDist += dist;
+        # linearly invert
+
+        for (op_name, pref) in pm.items():
+            inverted_pref = sumOfDist - pref
+            pm[op_name] = inverted_pref
+
         return pm
 
     def create_linear_PM(self, issue):
@@ -70,11 +116,33 @@ class Agent(object):
         # print("The PM of an agent is: ", pm)
         return pm
 
+    def create_distance_PM(self, issue):
+
+        pm = {}
+        sumOfDist = 0;
+        for op in issue.options:
+
+            dist = self.computeDistance(op)
+            if (dist == 0):
+                dist = 0.0000000001
+            pref = dist
+            pm[op.name] = pref;
+        # linearly invert
+        maxDist = math.sqrt(2*((2*dimensionSize)**2))
+        for (op_name, pref) in pm.items():
+            inverted_pref = (maxDist - pref)/maxDist
+            pm[op_name] = inverted_pref
+
+        return pm
+
+
     def computeDistance(self, option):
         dist = 0;
         for i in range(len(self.coordinates)):
             dist += pow(self.coordinates[i] - option.coordinates[i], 2)
         return math.sqrt(dist)
+
+
 
     def getBallot(self, kind="WR"):
 
@@ -92,6 +160,12 @@ class Agent(object):
             return self.getRankedChoiceBallot()
         if (kind == "AV"):
             return self.getApprovalBallot()
+        if (kind == "HR"):
+            return self.getHappinessBallot()
+        if (kind == "HLR"):
+            return self.getLinHappinessBallot()
+        if (kind == "Dist"):
+            return self.getDistBallot()
 
 
 
@@ -120,17 +194,35 @@ class Agent(object):
     #we don't wont anyone to choose one option and not another one simply because they are
     # later in the alphabet
 
-    def getApprovalBallot(self, fractionOfChosenOptions = 0.5):
+    def getApprovalBallot(self, fractionOfChosenOptions = None):
 
         sortPM = Helper.sortDictDescending(self.pm)
         ballot = Helper.getEmptyDict(list(self.pm.keys()))
-        for num, (opName, score) in enumerate(sortPM.items()):
-            if(num< len(sortPM.items())*fractionOfChosenOptions):
-                ballot[opName]= 1
-            # else:
-            #     if(score == list(ballot.values())[-1]):
-            #         ballot[opName] = 1
+
+        if(self.numApp != None):
+            for num, (opName, score) in enumerate(sortPM.items()):
+                if (num < self.numApp):
+                    ballot[opName] = 1
+            return ballot
+        if(fractionOfChosenOptions):
+            for num, (opName, score) in enumerate(sortPM.items()):
+                if(num< len(sortPM.items())*fractionOfChosenOptions):
+                    ballot[opName]= 1
+            return ballot
+
+        for (opName, score) in sortPM.items():
+            if(score>self.base):
+                ballot[opName] = 1
+
         return ballot
+
+    def getHappinessBallot(self):
+        return self.truePM
+
+    def getLinHappinessBallot(self):
+        return self.truelinPM
+    def getDistBallot(self):
+        return self.distPM
 
     def getRankedChoiceBallot(self):
         ballot = {}
@@ -144,4 +236,5 @@ class Agent(object):
         for opName, score in ballot.items():
             if(opName not in lostOptions):
                 return opName
+
 

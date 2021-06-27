@@ -53,5 +53,120 @@ def make_Arrow_Election():
 
     return Election(issue1, agents)
 
+def make_small_Election():
+    op1 = Option([-70,50]) #A
+    op2 = Option([70, 50]) #B
+    op3 = Option([0, -50]) #C
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+
+    agents = []
+
+    for i in range(5):
+        agents.append(Agent(coords1[i], issue1))
+
+
+    return Election(issue1, agents)
+
+def make_small_Election_1():
+    op1 = Option([-70,50]) #A
+    op2 = Option([70, 50]) #B
+    op3 = Option([0, -50]) #C
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agents =[]
+    agents.append(Agent([25, -75], issue1))
+    agents.append(Agent([-50, -75], issue1))
+    agents.append(Agent([50, 50], issue1))
+
+
+    return Election(issue1, agents)
+
+def make_strat_Election_1():
+    op1 = Option([-70,-70]) #A
+    op2 = Option([-50, -50]) #B
+    op3 = Option([50, 50]) #C
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agents =[]
+    # agents.append(Agent([25, -75], issue1))
+    agents.append(Agent([-50, -75], issue1))
+    agents.append(Agent([30, 30], issue1))
+
+
+    return Election(issue1, agents)
+
+def make_strat_Election_2():
+    op1 = Option([-70,-70]) #A
+    op2 = Option([-50, -50]) #B
+    op3 = Option([50, 50]) #C
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agents =[]
+    agents.append(Agent([25, -75], issue1))
+    agents.append(Agent([-50, -75], issue1))
+    agents.append(Agent([30, 30], issue1))
+
+
+    return Election(issue1, agents)
+
+def make_app_strat_Election():
+    op1 = Option([-70,80]) #A
+    op2 = Option([70, 80]) #B
+    op3 = Option([20, -80]) #C
+    op4 = Option([50, -80]) #D
+
+    issue1 = Issue([op1, op2, op3, op4], ["freedom", "taxes"])
+    agents =[]
+    agents.append(Agent([-5, 80], issue1))
+    agents.append(Agent([-77, -20], issue1))
+    agents.append(Agent([77, 85], issue1))
+    agents.append(Agent([77, 90], issue1))
+
+
+    return Election(issue1, agents)
+
+
+def make_circle_Election():
+    op1 = Option([0,-40]) #A
+    op2 = Option([0, 40]) #B
+
+    issue1 = Issue([op1, op2], ["freedom", "taxes"])
+    agents =[]
+    agents.append(Agent([0, -40], issue1))
+    agents.append(Agent([-34.64, 20], issue1))
+    agents.append(Agent([34.64, 20], issue1))
+
+
+    return Election(issue1, agents)
+
+
+def make_spreaded_circle_Election():
+    op1 = Option([0,-80]) #A
+    op2 = Option([0, 80]) #B
+
+    issue1 = Issue([op1, op2], ["freedom", "taxes"])
+    agents =[]
+    agents.append(Agent([0, -80], issue1))
+    agents.append(Agent([-34.64, 60], issue1))
+    agents.append(Agent([34.64, 60], issue1))
+
+
+    return Election(issue1, agents)
+
+
+def make_outlier_circle_Election():
+    op1 = Option([0,0]) #A
+    op2 = Option([0, 80]) #B
+
+    issue1 = Issue([op1, op2], ["freedom", "taxes"])
+    agents =[]
+    agents.append(Agent([0, -80], issue1))
+    agents.append(Agent([-34.64, 60], issue1))
+    agents.append(Agent([34.64, 60], issue1))
+
+
+    return Election(issue1, agents)
+
 
 

@@ -34,7 +34,7 @@ class Election:
         # result_list.append(self.computeResultWAR())
         # result_list.append(self.computeResultWAR(linear=True))
 
-        for kind in ["PL", "RC", "AV", "WR", "WLR", "WAR", "WALR"]:
+        for kind in ["PL", "RC", "AV", "WR", "WAR", "WLR", "GR", "HR", "HLR", "Dist"]:
             result_list.append(self.computeBallotResult(kind=kind))
 
         return result_list
@@ -156,14 +156,14 @@ class Election:
         plt.xlim([-dimensionSize, dimensionSize])
         plt.ylim([-dimensionSize, dimensionSize])
 
-        plt.savefig("elecPlot{}.png".format(int(time())), dpi=300)
+        # plt.savefig("elecPlot{}.png".format(int(time())), dpi=300)
 
         if (show):
             plt.show()
 
 
 
-    def print_elec_table(self):
+    def print_elec_table(self, linear= False, trueLin=False, true=False, dist=False):
 
 
         if(len(self.agents) > 5):
@@ -174,8 +174,17 @@ class Election:
         data = []
         _, ax = plt.subplots(1, 1)
         for i, ag in enumerate(self.agents):
+            PM = ag.pm
+            if (true):
+                PM = ag.truePM
+            if(linear):
+                PM = ag.linearPM
+            if(trueLin):
+                PM = ag.truelinPM
+            if (dist):
+                PM = ag.distPM
             column_labels.append("ag" + str(i))
-            data.append([round(num, 3) for num in list(ag.pm.values())])
+            data.append([round(num, 3) for num in list(PM.values())])
         data = np.array(data).T.tolist()
         df = pd.DataFrame(data, columns=column_labels)
         ax.axis('tight')
@@ -187,6 +196,7 @@ class Election:
         tab.scale(1.1, 1)
 
         plt.savefig("elecTable.png", dpi=300)
+        plt.show()
 
 
 
@@ -249,7 +259,7 @@ class Election:
                 # the_text.set_color(highlight_text_color)
                 ax.add_patch(the_cell)
 
-        plt.savefig("table.png", dpi=300)
+        # plt.savefig("table.png", dpi=300)
 
         if (show):
             plt.title(title)
@@ -261,14 +271,17 @@ class Election:
 
     def make_result_graphic(self):
 
-        plt.subplot(2, 2, 1)
+        ax1 = plt.subplot(2, 2, 1)
         self.print_election_plot(colorPlurality=True, show=False, scale=2)
-        plt.xticks(fontsize=6)
-        plt.yticks(fontsize=6)
-        plt.subplot(2,2,2)
+        ax1.set_aspect('equal')
+
+        plt.xticks(fontsize=5)
+        plt.yticks(fontsize=5)
+        ax2 = plt.subplot(2,2,2)
         self.print_election_plot(colorWeighted=True, show=False, scale =2)
-        plt.xticks(fontsize=6)
-        plt.yticks(fontsize=6)
+        ax2.set_aspect('equal')
+        plt.xticks(fontsize=5)
+        plt.yticks(fontsize=5)
 
         self.print_result_table(show=False, ax=plt.subplot(2,1,2))
         plt.savefig("elecGraphic.png", dpi=1000, bbox_inches='tight')
@@ -280,6 +293,8 @@ class Election:
 
         if(kind == "RC"):
             return self.computeBallotResultRC()
+        if(kind == "GR"):
+            return self.computeMiddleCoordOfAgents()
         else:
 
 
@@ -291,6 +306,16 @@ class Election:
             for opName, score in ag.getBallot(kind=kind).items():
                 result[opName] += score
         return ElectionResult(result, kind)
+
+    def computeMiddleCoordOfAgents(self):
+        middleCords = [0]*len(self.issue.dimensions)
+        for i in range(len(self.issue.dimensions)):
+            for ag in self.agents:
+                middleCords[i] += ag.coordinates[i]/len(self.agents)
+        agent = Agent(middleCords, self.issue)
+        return ElectionResult(agent.linearPM, "GR")
+
+
 
     def computeBallotResultRC(self):
 

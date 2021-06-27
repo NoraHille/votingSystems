@@ -21,6 +21,6 @@ class AgentBlock(object):
             print("wrong coordinates!")
         else:
             for ag in self.agents:
-                ag.setCoordinates = newCoordinates
+                ag.setCoordinates(newCoordinates)
 
 
