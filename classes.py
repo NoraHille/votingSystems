@@ -58,7 +58,7 @@ class Issue(object):
             coord = makeAdjecentCoordinates(self.numDimensions(), centerPoints[currentIndex][1])
             agents.append(Agent(coord, self))
             coords.append(coord)
-        print(coords)
+        # print(coords)
         return agents
 
 

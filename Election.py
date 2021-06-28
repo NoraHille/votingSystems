@@ -24,6 +24,8 @@ class Election:
 
 
 
+
+
     def computeAllResults(self):
         result_list = []
         # result_list.append(self.computeResultPlurality())
@@ -317,10 +319,7 @@ class Election:
             return self.computeGraphic()
         if (kind == "GRP"):
             return self.computeGraphicWithOutlierPunishing()
-        else:
-
-
-            return self.computeAdditiveResults(kind)
+        return self.computeAdditiveResults(kind)
 
     def computeAdditiveResults(self, kind="WR"):
         result = Helper.getEmptyDict(list(self.agents[0].pm.keys()))
@@ -341,7 +340,7 @@ class Election:
         middleCords = self.computeMiddleCoordOfAgents()
 
         agent = Agent(middleCords, self.issue)
-        return ElectionResult(agent.linearPM, "GR")
+        return ElectionResult(agent.pm, "GR")
 
     def computeGraphicWithOutlierPunishing(self, retPoints=False):
         middleCoords = self.computeMiddleCoordOfAgents()
