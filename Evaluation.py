@@ -14,10 +14,10 @@ import pandas as pd
 evalKindDict = {"dist": "Distance to result", "sqdist": "Squared distance to result", "hap": "Happiness with result", "distw": "Distance to winner", "hww": "Weighted happiness with winner", "hw": "Happiness with winner"}
 # eval_list = ["dist"]
 # eval_list = ["dist", "sqdist", "rtdist", "hap", "distw", "hww", "hw"]
-eval_list = ["dist", "sqdist", "rtdist", "hap", "distw", "hww", "hw", "GS"]
+eval_list = ["dist", "sqdist", "rtdist", "GS", "GSW", "WRS", "WRSW", "hw"]
 # kind_list = ["RC"]
 # kind_list = ["WR", "WAR", "AV", "RC", "PL"]
-kind_list = ["WR", "WAR", "AV", "RC", "PL", "WALR", "WLR", "GR"]
+kind_list = ["WR", "WAR", "AV", "RC", "PL"]
 
 
 def method():
@@ -114,7 +114,7 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
     tab.set_fontsize(6)
     tab.scale(1.1, 1)
     plt.title("Random Election with {} agents and {} options.".format(numAgents, numOptions))
-    plt.savefig("happinessTable.png", dpi=700)
+    plt.savefig("happinessTableWithWR.png", dpi=700)
     if(show):
         plt.show()
 
@@ -124,6 +124,14 @@ def computeHappinessWithResult(election: Election, result: ElectionResult, kind=
 
     if(kind=="GS"): #closeness to graphic solution
         return closenessToGraphicSolution(election, result)
+
+    if (kind == "WRS"):  # closeness to graphic solution
+        return closenessToWRSolution(election, result)
+    if (kind == "WRSW"):  # closeness to graphic solution
+        return closenessToWRSolutionWinner(election, result)
+
+    if (kind == "GSW"):  # closeness to graphic solution winner
+        return closenessToGraphicSolutionWinner(election, result)
 
 
     totalHappiness = 0
@@ -153,7 +161,6 @@ def computeHappinessWithResult(election: Election, result: ElectionResult, kind=
         if (kind == "distw"):
             agHappiness = distanceOfAgentToWinner(agent, result, linear=linear)
         totalHappiness += agHappiness
-        print(agHappiness)
         if(makePlot):
             for num in list(curveDict.keys()):
                 if(agHappiness<num+ spanOfABar):
@@ -183,8 +190,8 @@ def computeHappinessWithResult(election: Election, result: ElectionResult, kind=
 
 def computeVarianceOfHappiness(election: Election, result: ElectionResult, kind="dist", linear=False)-> float:
 
-    if(kind=="GS"): #closeness to graphic solution
-        return -1
+    # if(kind=="GS" or kind=="GSW"): #closeness to graphic solution
+    #     return -1
 
     mu = computeHappinessWithResult(election, result, kind=kind, linear=linear)/len(election.agents)
 
@@ -211,11 +218,32 @@ def computeVarianceOfHappiness(election: Election, result: ElectionResult, kind=
     return variance/agentNum
 
 def closenessToGraphicSolution(elec: Election, result: ElectionResult):
-    grres = elec.computeGraphicWithOutlierPunishing()
+    grres = elec.computeGraphicWithOutlierPunishingCircle()
     totalDist = 0
     for opName, score in grres.normalizedRanking.items():
         totalDist+= abs(result.normalizedRanking[opName]-score)
     return totalDist
+
+def closenessToGraphicSolutionWinner(elec: Election, result: ElectionResult):
+    grres = elec.computeGraphicWithOutlierPunishingCircle()
+    if(Helper.getWinner(grres.normalizedRanking) == Helper.getWinner(result.normalizedRanking)):
+        return 1
+    else:
+        return 0
+
+def closenessToWRSolution(elec: Election, result: ElectionResult):
+    wrres = elec.computeBallotResult(kind="WR")
+    totalDist = 0
+    for opName, score in wrres.normalizedRanking.items():
+        totalDist+= abs(result.normalizedRanking[opName]-score)
+    return totalDist
+
+def closenessToWRSolutionWinner(elec: Election, result: ElectionResult):
+    wrres = elec.computeBallotResult(kind="WR")
+    if(Helper.getWinner(wrres.normalizedRanking) == Helper.getWinner(result.normalizedRanking)):
+        return 1
+    else:
+        return 0
 
 
 

@@ -42,7 +42,7 @@ class Election:
     def getOptionNameList(self):
         return list(self.agents[0].pm.keys())
 
-    def print_election_plot(self, show=True, highlightAgent: int=None, colorPlurality=False, colorWeighted=False, linear=False, scale=1):
+    def print_election_plot(self, show=True, highlightAgent: int=None, colorPlurality=False, colorWeighted=False, linear=False, scale=1, printMiddle=False):
 
         if (len(self.issue.dimensions) != 2):
             print("You tried to plot an election with more/less than 2 dimensions, namely ", len(self.issue.dimensions))
@@ -149,6 +149,26 @@ class Election:
             x = self.agents[highlightAgent].coordinates[0]
             y = self.agents[highlightAgent].coordinates[1]
             plt.scatter(x, y, s=10, color="darkblue")
+
+        if(printMiddle):
+            mc = self.computeMiddleCoordOfAgents()
+            x = mc[0]
+            y = mc[1]
+            plt.scatter(x, y, s=40, color="black")
+
+            mc, points = self.computeGraphicWithOutlierPunishing(retPoints=True)
+            x = mc[0]
+            y = mc[1]
+            plt.scatter(x, y, s=20, color="gray")
+            for p in points:
+                plt.scatter(p[0], p[1], s=10, color="red")
+
+            mc, points = self.computeGraphicWithOutlierPunishingCircle(retPoints=True)
+            x = mc[0]
+            y = mc[1]
+            plt.scatter(x, y, s=20, color="darkgreen")
+            for p in points:
+                plt.scatter(p[0], p[1], s=10, color="green")
 
         for i, txt in enumerate(op_names):
             plt.annotate(txt, xy=(op_x[i], op_y[i]), xytext=(op_x[i]-2*scale, op_y[i]-2*scale))
@@ -323,13 +343,14 @@ class Election:
         agent = Agent(middleCords, self.issue)
         return ElectionResult(agent.linearPM, "GR")
 
-    def computeGraphicWithOutlierPunishing(self):
+    def computeGraphicWithOutlierPunishing(self, retPoints=False):
         middleCoords = self.computeMiddleCoordOfAgents()
         newPoints = []
         for ag in self.agents:
             dist = ag.computeDistancePoint(middleCoords)
-            dist = dist**0.5
-            newPoint = [middleCoords[i] + (ag.coordinates[i] - middleCoords[i])*dist for i in range(len(middleCoords))]
+            rtdist = dist**0.5
+            vecFromMidToAgWithLength1 = [(ag.coordinates[i] - middleCoords[i])/dist for i in range(len(middleCoords))]
+            newPoint = [middleCoords[i] + vecFromMidToAgWithLength1[i]*rtdist for i in range(len(middleCoords))]
             newPoints.append(newPoint)
 
         trueMiddleCords = [0] * len(self.issue.dimensions)
@@ -337,12 +358,35 @@ class Election:
             for newPoint in newPoints:
                 trueMiddleCords[i] += newPoint[i] / len(newPoints)
         agent = Agent(trueMiddleCords, self.issue)
+
+        if (retPoints):
+            return trueMiddleCords, newPoints
         return ElectionResult(agent.linearPM, "GRP")
 
+    def computeGraphicWithOutlierPunishingCircle(self,  retPoints=False):
+        middleCoords = self.computeMiddleCoordOfAgents()
+        totalDist = 0
+        newPoints = []
+        for ag in self.agents:
+            totalDist += ag.computeDistancePoint(middleCoords)
+        meanDist = totalDist/len(self.agents)
+        for ag in self.agents:
+            dist = ag.computeDistancePoint(middleCoords)
+            vecFromMidToAgWithLength1 = [(ag.coordinates[i] - middleCoords[i]) / dist for i in range(len(middleCoords))]
+            newPoint = [middleCoords[i] + vecFromMidToAgWithLength1[i]*meanDist for i in range(len(middleCoords))]
+            newPoints.append(newPoint)
+
+        trueMiddleCords = [0] * len(self.issue.dimensions)
+        for i in range(len(self.issue.dimensions)):
+            for newPoint in newPoints:
+                trueMiddleCords[i] += newPoint[i] / len(newPoints)
+        agent = Agent(trueMiddleCords, self.issue)
+        if(retPoints):
+            return trueMiddleCords, newPoints
+        return ElectionResult(agent.pm, "GRPC")
 
 
 
-        return ElectionResult(agent.linearPM, "GRP")
 
 
 

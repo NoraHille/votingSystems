@@ -14,9 +14,9 @@ from classes import Option, Issue
 from agentBlock import AgentBlock
 from agent import Agent
 from Helper import Helper
-from Election import Election,  initializeRandomElection, makeElectionWithAgentBlocks
+from Election import Election, initializeRandomElection, makeElectionWithAgentBlocks, initializeElection
 from strategicVoting import generateStrategicVoting, computePossibilityStratVote
-from exampleElections import make_Election_1, make_small_Election, make_small_Election_1, make_circle_Election, make_spreaded_circle_Election, make_outlier_circle_Election, make_strat_Election_1
+from exampleElections import make_Election_1, make_small_Election, make_small_Election_1, make_circle_Election, make_spreaded_circle_Election, make_outlier_circle_Election, make_strat_Election_1, make_upperRightCoordsElec, make_Election_With_Extremes, make_Election_With_extreme_Extremes
 
 
 
@@ -24,8 +24,12 @@ def method():
 
 
 
-    election = make_Election_1()
-    election.make_result_graphic()
+    election = make_Election_With_extreme_Extremes()
+    # election.make_result_graphic()
+    election.print_election_plot(printMiddle=True)
+
+    # election = initializeElection(5, 100, 2, centerPoints=[(0.9, (90,90)), (0.1, (-80, -30))])
+    # election.make_result_graphic()
 
 
 

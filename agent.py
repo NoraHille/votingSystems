@@ -21,10 +21,10 @@ class Agent(object):
         self.distPM = self.create_distance_PM(self.issue)
 
     def setNumApp(self, num):
-        if(num == -1 or num == None):
+        if(num == None):
             self.numApp = None
             return
-        if(num<= len(self.issue.options)):
+        if(abs(num)<= len(self.issue.options)):
             self.numApp = num
         else:
             print("wrong numApp length in setNumApp")
@@ -119,12 +119,11 @@ class Agent(object):
     def create_distance_PM(self, issue):
 
         pm = {}
-        sumOfDist = 0;
         for op in issue.options:
 
             dist = self.computeDistance(op)
-            if (dist == 0):
-                dist = 0.0000000001
+            # if (dist == 0):
+            #     dist = 0.0000000001
             pref = dist
             pm[op.name] = pref;
         # linearly invert
@@ -194,6 +193,21 @@ class Agent(object):
             ballot[opName] = score/highestScore
         if(ballot[winner] != 1):
             print("something went wrong with the approval ballot")
+
+        if(self.numApp != None):
+
+            sortBallot = Helper.sortDictDescending(ballot)
+
+            if(self.numApp > 0):
+                for num, (key, value) in enumerate(sortBallot.items()):
+                    if(self.numApp > num):
+                        ballot[key] = 1
+            if (self.numApp < 0):
+                for num, (key, value) in enumerate(sortBallot.items()):
+                    if (len(ballot) + self.numApp <= num):
+                        ballot[key] = 0
+
+
         return ballot
 
 
@@ -210,6 +224,7 @@ class Agent(object):
                 if (num < self.numApp):
                     ballot[opName] = 1
             return ballot
+
         if(fractionOfChosenOptions):
             for num, (opName, score) in enumerate(sortPM.items()):
                 if(num< len(sortPM.items())*fractionOfChosenOptions):

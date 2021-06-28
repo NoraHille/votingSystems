@@ -282,6 +282,76 @@ class TestVotingResults(unittest.TestCase):
         self.assertEqual(['A'], winner2)
 
 
+    def test_AppNum_in_WAR(self):
+        op1 = Option([-50, 80])  # A
+        op2 = Option([70, 80])  # B
+        op3 = Option([20, -20])  # C
+
+        issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+        agent = Agent([0,0], issue1)
+
+        initBallot = agent.getWeightedApprovalBallot()
+
+        agent.setNumApp(-2)
+
+        newBallot = agent.getWeightedApprovalBallot()
+
+        self.assertEqual(list(newBallot.values()), [0,0,1])
+
+        agent.setNumApp(-1)
+
+        newBallot = agent.getWeightedApprovalBallot()
+
+        self.assertEqual(list(newBallot.values()), [initBallot['A'], 0, 1])
+
+        agent.setNumApp(3)
+
+        newBallot = agent.getWeightedApprovalBallot()
+
+        self.assertEqual(list(newBallot.values()), [1, 1, 1])
+
+        agent.setNumApp(2)
+
+        newBallot = agent.getWeightedApprovalBallot()
+
+        self.assertEqual(list(newBallot.values()), [1, initBallot['B'], 1])
+
+        agent.setNumApp(0)
+
+        newBallot = agent.getWeightedApprovalBallot()
+
+        self.assertEqual(list(newBallot.values()), list(initBallot.values()))
+
+
+    def test_dist_pm(self):
+        op1 = Option([-70, 80])  # A
+        op2 = Option([70, 80])  # B
+        op3 = Option([20, -80])  # C
+        op4 = Option([50, -80])  # D
+
+        issue1 = Issue([op1, op2, op3, op4], ["freedom", "taxes"])
+        agent = Agent([50, -80], issue1)
+
+        distPM = agent.distPM
+
+
+
+        op1 = Option([-70, 80])  # A
+        op2 = Option([70, 80])  # B
+        op3 = Option([20, -80])  # C
+
+        issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+        agent = Agent([50, -80], issue1)
+
+        distPM2 = agent.distPM
+
+        self.assertEqual([distPM[op] for op in ["A", "B", "C"]], [distPM2[op] for op in ["A", "B", "C"]])
+
+
+
+
+
+
 
 
 

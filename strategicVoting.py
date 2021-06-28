@@ -262,7 +262,7 @@ def getCoordinatesFromNum(num: int):
     return [posDict[firstnum], posDict[secondnum]]
 
 def stratVotPosStats(rounds=1000):
-    numAg = 20
+    numAg = 4
     numOp = 5
 
     resultDict = {}
@@ -296,9 +296,7 @@ def computeStratVotPosForAll(election=None):
         election = initializeRandomElection(5, 4, 2)
     dicti= {}
     for kind in ["AV", "WR", "WAR", "RC", "PL"]:
-        # for kind in ["WR"]:
         stratPos = computePossibilityStratVote(election, kind=kind)
-            # if (stratPos['Over voters:'] > 0 or goOn == False):
         dicti[kind] = stratPos
         # print(kind, stratPos)
     return dicti
@@ -325,6 +323,8 @@ def computePossibilityStratVote(election: Election, kind: str):
             for num, op in enumerate(election.issue.options):
                 if (kind == "AV"):
                     ag.setNumApp(num + 1)
+                # if (kind == "WAR"):
+                #     ag.setNumApp(num + 1)
                 else:
                     ag.setCoordinates(op.coordinates) #The agent pretends to have this option as their prefered choice
                 newResult = election.computeBallotResult(kind)

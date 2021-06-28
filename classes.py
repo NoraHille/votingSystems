@@ -44,6 +44,7 @@ class Issue(object):
     def getCenterPointAgents(self, centerPoints, numAgents):
         listOfChangePoints = []
         agents = []
+        coords = []
         changePoint = 0
         for (rate, cp) in centerPoints:
             changePoint += rate * numAgents
@@ -54,9 +55,10 @@ class Issue(object):
             for num, cp in enumerate(listOfChangePoints):
                 if (i > cp):
                     currentIndex = num + 1
-            ag = makeAdjecentCoordinates(self.numDimensions(), centerPoints[currentIndex][1])
-            agents.append(ag)
-        print(agents)
+            coord = makeAdjecentCoordinates(self.numDimensions(), centerPoints[currentIndex][1])
+            agents.append(Agent(coord, self))
+            coords.append(coord)
+        print(coords)
         return agents
 
 
