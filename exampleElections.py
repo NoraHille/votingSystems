@@ -294,6 +294,65 @@ def make_small_Elec_with_3_options():
 
     return Election(issue1, agents)
 
+def make_small_Elec_with_2_options():
+    op1 = Option([-70, -90])
+    op2 = Option([-90, -70])
+    issue1 = Issue([op1, op2], ["freedom", "taxes"])
+    agents = []
+    agents.append(Agent([-70, -97], issue1))
+    agents.append(Agent([-62, -95], issue1))
+    agents.append(Agent([-80, -90], issue1))
+    agents.append(Agent([40, 90], issue1))
+    agents.append(Agent([30, 90], issue1))
+    return Election(issue1, agents)
 
+def make_small_Elec_with_2_options_2(): # Problem election :(
+    op1 = Option([-70, -90])
+    op2 = Option([-90, -70])
+    issue1 = Issue([op1, op2], ["freedom", "taxes"])
+    agents = []
+    agents.append(Agent([-70, -97], issue1))
 
+    agents.append(Agent([80, 90], issue1))
+    agents.append(Agent([70, 90], issue1))
+    agents.append(Agent([60, 90], issue1))
+    agents.append(Agent([50, 90], issue1))
+    return Election(issue1, agents)
 
+def make_small_Elec_with_2_options_2_left(): # Problem election :(
+    op1 = Option([-70, -90])
+    op2 = Option([-90, -70])
+    issue1 = Issue([op1, op2], ["freedom", "taxes"])
+    agents = []
+    agents.append(Agent([-70, -97], issue1))
+
+    agents.append(Agent([-80, 90], issue1))
+    agents.append(Agent([-70, 90], issue1))
+    agents.append(Agent([-60, 90], issue1))
+    agents.append(Agent([-50, 90], issue1))
+    return Election(issue1, agents)
+
+def make_small_Elec_with_2_options_2_right(): # Problem election :(
+    op1 = Option([-70, -90])
+    op2 = Option([-90, -70])
+    issue1 = Issue([op1, op2], ["freedom", "taxes"])
+    agents = []
+    agents.append(Agent([-70, -97], issue1))
+
+    agents.append(Agent([80, 90], issue1))
+    agents.append(Agent([70, 90], issue1))
+    agents.append(Agent([60, 90], issue1))
+    agents.append(Agent([50, 90], issue1))
+    return Election(issue1, agents)
+
+def make_small_Elec_with_2_options_2_right2(): # Problem election :(
+    op1 = Option([-70, -90])
+    op2 = Option([-90, -70])
+    issue1 = Issue([op1, op2], ["freedom", "taxes"])
+    agents = []
+    agents.append(Agent([-70, -97], issue1))
+
+    agents.append(Agent([80, 90], issue1))
+    agents.append(Agent([70, 90], issue1))
+    agents.append(Agent([60, 90], issue1))
+    return Election(issue1, agents)

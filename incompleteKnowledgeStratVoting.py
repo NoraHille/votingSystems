@@ -15,8 +15,6 @@ from Helper import  Helper
 from Election import Election, initializeRandomElection, initializeElection
 from exampleElections import make_small_Election_1, make_Election_1, make_strat_Election_1, make_strat_Election_2, make_app_strat_Election, make_small_Election_3
 
-
-
 posDict = {0: -80, 1: -60, 2: -40, 3: -20, 4: 0, 5:20, 6:40, 7:60, 8:80}
 
 
@@ -27,19 +25,28 @@ posDict = {0: -80, 1: -60, 2: -40, 3: -20, 4: 0, 5:20, 6:40, 7:60, 8:80}
 def method():
     print("HI")
 
-    findOptimalPositions(1000)
+    StatOnIncomKnowStratVote(1000)
 
 
-def findOptimalPositions(rounds):
+# This method runs through a bunch of elections and sees if there is the possibilty to do strat vote within the coord system. If there isn't it sees if that changed when we allow any ballot.
+
+def StatOnIncomKnowStratVote(rounds):
+
+
+    numOtherAgents = 3
     kinds = ["WR", "WAR"]
     winningOptionNum = Helper.getEmptyDict(kinds)
     anotherOptionNum = Helper.getEmptyDict(kinds)
+    switchToOptionNum = Helper.getEmptyDict(kinds)
     origPosNum = Helper.getEmptyDict(kinds)
     otherPosNum = Helper.getEmptyDict(kinds)
     WinOrigNum = Helper.getEmptyDict(kinds)
     WinOpNum = Helper.getEmptyDict(kinds)
     OrigOpNum = Helper.getEmptyDict(kinds)
     OpOpNum = Helper.getEmptyDict(kinds)
+    BallotChangeToWin = Helper.getEmptyDict(kinds)
+    BallotChangeToOtherOp = Helper.getEmptyDict(kinds)
+
 
 
 
@@ -53,13 +60,14 @@ def findOptimalPositions(rounds):
 
         agent = Agent(makeRandomCoordinates(2), issue)
         for kind in kinds:
-            [bestCoord, origCorner1, secondBestCoord, origCorner2, baseDistance] = sampleUnknowingStrategic(agent, issue, 3, kind=kind)
+            [bestCoord, origCorner1, secondBestCoord, origCorner2, baseDistance, bestDistance] = sampleUnknowingStrategic(agent, issue, numOtherAgents, kind=kind)
 
             opWasACorner = False
             origWasACorner = False
             winWasACorner = False
             OpOp = False
             posFound = False
+            switchToOption = False
             if(bestCoord == agent.coordinates):
                 origPosNum[kind] += 1
 
@@ -68,10 +76,12 @@ def findOptimalPositions(rounds):
                     if(bestCoord == op.coordinates):
                         if(op.name in Helper.getWinner(agent.pm)):
                             winningOptionNum[kind]+=1
+                            switchToOption = True
                             posFound =True
                             break
                         else:
                             anotherOptionNum[kind] += 1
+                            switchToOption = True
                             posFound = True
                             break
                     if (origCorner2 == op.coordinates or origCorner1 == op.coordinates):
@@ -94,96 +104,82 @@ def findOptimalPositions(rounds):
                         OrigOpNum[kind]+=1
                     if(OpOp):
                         OpOpNum[kind] += 1
-
                     otherPosNum[kind] += 1
-                    # print("{}: bestCoords {}, 2nd best coords {}. This was orig: {} These are the options: {}".format(kind, bestCoord, secondBestCoord, agent.coordinates, [op.coordinates for op in issue.options]))
+                    changed = False
+
+            if(not switchToOption):
+                for op in options:
+                    ballot = makeBallotForChangeVote(agent, op.name, kind=kind)
+                    dist = distanceWithBallotInRandomFilledElection(agent, issue, numOtherAgents, ballot, kind=kind)
+                    if(dist < bestDistance):
+                        bestDistance = dist
+                        bestOp = op
+                        changed = True
+
+                if(changed):
+                    if bestOp.name in Helper.getWinner(agent.pm)[0]:
+                        BallotChangeToWin[kind] += 1
+                    else:
+                        BallotChangeToOtherOp[kind] += 1
+            else:
+                switchToOptionNum[kind] += 1
+
+
+
+
+
 
 
     for kind in kinds:
-        print(winningOptionNum[kind], anotherOptionNum[kind], origPosNum[kind], otherPosNum[kind], WinOrigNum[kind], OrigOpNum[kind], WinOpNum[kind], OpOpNum[kind])
+        print(kind, "switch to Option:", winningOptionNum[kind], anotherOptionNum[kind], switchToOptionNum[kind],
+              "other pos: ", origPosNum[kind], otherPosNum[kind], "distribution of other posses: ", WinOrigNum[kind],
+              OrigOpNum[kind], WinOpNum[kind], OpOpNum[kind], "ballot changes:", BallotChangeToWin[kind],
+              BallotChangeToOtherOp[kind])
+
+        print("-------------------------------------------------------------------------------------------------------------")
+
+        print("In {} there were a total of {} switches exactly on top of an option. {} ({} %) of them to the winner and {} ({} %)to another one. {} ({} % of cases) remained at their original position, while {} ({} %) found a new Position. {} + {} + {} + {}".format(kind, switchToOptionNum[kind], winningOptionNum[kind], winningOptionNum[kind]/switchToOptionNum[kind] * 100, anotherOptionNum[kind], anotherOptionNum[kind]/switchToOptionNum[kind] * 100, origPosNum[kind], origPosNum[kind]/rounds* 100, otherPosNum[kind], otherPosNum[kind]/rounds* 100,WinOrigNum[kind], OrigOpNum[kind], WinOpNum[kind], OpOpNum[kind]))
+        print("The new positions lay between the winner and orig {} % of time, between another option and orig {} % of the time, between the winner and another option {} % of the time and between two option {} % of the time.".format(WinOrigNum[kind]/otherPosNum[kind]* 100,OrigOpNum[kind]/otherPosNum[kind]* 100, WinOpNum[kind]/otherPosNum[kind]* 100, OpOpNum[kind]/otherPosNum[kind]* 100))
+        print("Of the {} times the optimal position was not on an option, we could place the optimal position on the winner {} times ({} %) and on another option {} times ({} %) through ballot voting.".format(origPosNum[kind] + otherPosNum[kind],  BallotChangeToWin[kind],  BallotChangeToWin[kind]/(origPosNum[kind] + otherPosNum[kind])* 100, BallotChangeToOtherOp[kind],  BallotChangeToOtherOp[kind]/(origPosNum[kind] + otherPosNum[kind])* 100))
+
+        print("-------------------------------------------------------------------------------------------------------------")
+
+def makeBallotForChangeVote(agent, opName, kind="WR"):
+
+    ballot = Helper.getEmptyDict(list(agent.pm.keys()))
+    sortPM = Helper.sortDictDescending(agent.pm)
+    for opname in sortPM.keys():
+        if (opname == opName):
+            ballot[opname] = 1
+            break
+        if(kind=="WAR"):
+            ballot[opname] = 1
+
+    return ballot
 
 
+def distanceWithBallotInRandomFilledElection(agent: Agent, issue: Issue, numOtherAgents, ballot, kind="WR", doWholeResult=False):
+    numRounds = 10000
+    totalDistance = 0
+    for i in range(numRounds):
+        agents = issue.getRandomAgents(numOtherAgents)
+        agentsVote = copy.deepcopy(agent)
+        agentsVote.setPM(ballot)
+        agents.append(agentsVote)
 
-def incompleteKnowledgeWith5ExampleElecs():
+        election = Election(issue, agents)
 
-    results = []
-
-    op1 = Option([50, 50])
-    op2 = Option([-50, -80])
-    op3 = Option([-60, -70])
-
-    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-    agent = Agent([40,40], issue1)
-
-    results.append((1, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
-    results.append((1, "WAR",sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
-    results.append((1, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
-    results.append((1, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
-    election = Election(issue1, [agent])
-    election.print_election_plot()
-
-    op1 = Option([90, 90])
-    op2 = Option([20, 20])
-    op3 = Option([-90, -90])
-
-    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-    agent = Agent([80, 80], issue1)
-
-    results.append((2, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
-    results.append((2, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
-    results.append((2, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
-    results.append((2, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
-    election = Election(issue1, [agent])
-    election.print_election_plot()
-
-    op1 = Option([90, 90])
-    op2 = Option([20, 20])
-    op3 = Option([-90, -90])
-
-    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-    agent = Agent([60, 60], issue1)
-
-    results.append((3, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
-    results.append((3, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
-    results.append((3, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
-    results.append((3, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
-    election = Election(issue1, [agent])
-    election.print_election_plot()
-
-    op1 = Option([90, 90])
-    op2 = Option([-20, -20])
-    op3 = Option([70, 90])
-
-    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-    agent = Agent([60, 60], issue1)
-
-    results.append((4, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
-    results.append((4, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
-    results.append((4, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
-    results.append((4, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
-    election = Election(issue1, [agent])
-    election.print_election_plot()
-
-    op1 = Option([90, 90])
-    op2 = Option([-20, -20])
-    op3 = Option([45, 90])
-
-    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-    agent = Agent([70, 90], issue1)
-
-    results.append((5, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
-    results.append((5, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
-    results.append((5, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
-    results.append((5, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
-    election = Election(issue1, [agent])
-    election.print_election_plot()
-
-
-    for index, kind, res in results:
-        print("Election {}, {}: bestCoord: {}, bestDistance: {}, sndBestCoord: {}, sndBestDist: {}, baseDist{}".format(index, kind,
-            res[0], res[1], res[2], res[3], res[4]))
-
-
+        # if(i%125 ==0):
+        #     print(i)
+        #     election.print_election_plot(highlightAgent=3)
+        result = election.computeBallotResult(kind)
+        # how much does the agent like the result?
+        if(doWholeResult):
+            totalDistance += distanceOfAgentToResult(agent, result)
+        else:
+            totalDistance += 1- preferanceOfAgentOfWinner(agent, result)
+    totalDistance /= numRounds
+    return totalDistance
 
 
 
@@ -269,7 +265,7 @@ def sampleUnknowingStrategic(agent: Agent, issue: Issue, numOtherAgents, kind="W
                 secondBestDistance = distance
                 secondBestCoord = coord
 
-    return [bestCoord, origCorner1, secondBestCoord, origCorner2, baseDistance]
+    return [bestCoord, origCorner1, secondBestCoord, origCorner2, baseDistance, bestDistance]
 
 
 
@@ -287,7 +283,7 @@ def calculateMiddlePosition(co1,co2):
 
 def distanceWithPositionInRandomFilledElection(agent: Agent, issue: Issue, numOtherAgents, position, kind="WR", doWholeResult=False):
     # numRounds = 81**numOtherAgents #We seperate the field into 81 distinct positions for the other agents.
-    numRounds = 1000
+    numRounds = 100
     totalDistance = 0
     for i in range(numRounds):
         # agents = getOtherAgentsForStratVote(i, issue)
@@ -338,6 +334,89 @@ def getCoordinatesFromNum(num: int):
     secondnum = math.floor(num/9)
 
     return [posDict[firstnum], posDict[secondnum]]
+
+def incompleteKnowledgeWith5ExampleElecs():
+
+    results = []
+
+    op1 = Option([50, 50])
+    op2 = Option([-50, -80])
+    op3 = Option([-60, -70])
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agent = Agent([40,40], issue1)
+
+    results.append((1, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
+    results.append((1, "WAR",sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
+    results.append((1, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
+    results.append((1, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
+    election = Election(issue1, [agent])
+    election.print_election_plot()
+
+    op1 = Option([90, 90])
+    op2 = Option([20, 20])
+    op3 = Option([-90, -90])
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agent = Agent([80, 80], issue1)
+
+    results.append((2, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
+    results.append((2, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
+    results.append((2, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
+    results.append((2, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
+    election = Election(issue1, [agent])
+    election.print_election_plot()
+
+    op1 = Option([90, 90])
+    op2 = Option([20, 20])
+    op3 = Option([-90, -90])
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agent = Agent([60, 60], issue1)
+
+    results.append((3, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
+    results.append((3, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
+    results.append((3, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
+    results.append((3, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
+    election = Election(issue1, [agent])
+    election.print_election_plot()
+
+    op1 = Option([90, 90])
+    op2 = Option([-20, -20])
+    op3 = Option([70, 90])
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agent = Agent([60, 60], issue1)
+
+    results.append((4, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
+    results.append((4, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
+    results.append((4, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
+    results.append((4, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
+    election = Election(issue1, [agent])
+    election.print_election_plot()
+
+    op1 = Option([90, 90])
+    op2 = Option([-20, -20])
+    op3 = Option([45, 90])
+
+    issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
+    agent = Agent([70, 90], issue1)
+
+    results.append((5, "WR", sampleUnknowingStrategic(agent, issue1, 3)))
+    results.append((5, "WAR", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR")))
+    results.append((5, "WR-whole", sampleUnknowingStrategic(agent, issue1, 3, doWholeResult=True)))
+    results.append((5, "WAR-whole", sampleUnknowingStrategic(agent, issue1, 3, kind="WAR", doWholeResult=True)))
+    election = Election(issue1, [agent])
+    election.print_election_plot()
+
+
+    for index, kind, res in results:
+        print("Election {}, {}: bestCoord: {}, bestDistance: {}, sndBestCoord: {}, sndBestDist: {}, baseDist{}".format(index, kind,
+            res[0], res[1], res[2], res[3], res[4]))
+
+
+
+
 
 
 if __name__ == '__main__':

@@ -16,20 +16,25 @@ from agent import Agent
 from Helper import Helper
 from Election import Election, initializeRandomElection, makeElectionWithAgentBlocks, initializeElection
 from strategicVoting import generateStrategicVoting, computePossibilityStratVote
-from exampleElections import make_Election_1, make_small_Election, make_small_Election_1, make_circle_Election, make_spreaded_circle_Election, make_outlier_circle_Election, make_strat_Election_1, make_upperRightCoordsElec, make_Election_With_Extremes, make_Election_With_extreme_Extremes, make_small_extreme_Elec_2
-
+from exampleElections import make_Election_1, make_small_Election, make_small_Election_1, make_circle_Election, \
+    make_spreaded_circle_Election, make_outlier_circle_Election, make_strat_Election_1, make_upperRightCoordsElec, \
+    make_Election_With_Extremes, make_Election_With_extreme_Extremes, make_small_extreme_Elec_2, \
+    make_small_Elec_with_2_options, make_small_Elec_with_2_options_2, make_small_Elec_with_2_options_2_left, \
+    make_small_Elec_with_2_options_2_right, make_small_Elec_with_2_options_2_right2
 
 
 def method():
 
+    compare_different_pref_computations(2)
 
 
-    election = make_small_extreme_Elec_2()
-    # election.make_result_graphic()
-    election.print_election_plot()
-    print(election.computeBallotResult("HR").normalizedRanking)
-    print(election.computeBallotResult("WR").normalizedRanking)
-    print(election.computeBallotResult("WAR").normalizedRanking)
+
+
+
+
+    pass
+
+
 
     # election = initializeElection(5, 100, 2, centerPoints=[(0.9, (90,90)), (0.1, (-80, -30))])
     # election.make_result_graphic()
@@ -71,6 +76,31 @@ def method():
 #         agents.append(Agent([10, -40], issue1)) #(C,B)
 #     for i in range(2): #(20):
 #         agents.append(Agent([10, 50], issue1)) #(B,A)
+def compare_different_pref_computations(numOp):
+    el = initializeRandomElection(4, 100, 2)
+    el.make_result_graphic()
+
+    print("distPM", el.agents[0].pm)
+    # print("distPM WAR", el.agents[0].getBallot("WAR"))
+    print("linPM", el.agents[0].linearPM)
+    multPM = el.agents[0].create_PM(el.agents[0].issue)
+    print("multPM", multPM)
+
+
+
+def show_weird_result_with_weighted():
+    election = make_small_Elec_with_2_options_2_left()
+    election.make_result_graphic()
+    election.print_election_plot()
+
+    election = make_small_Elec_with_2_options_2_right()
+    election.make_result_graphic()
+    election.print_election_plot()
+
+    election = make_small_Elec_with_2_options_2_right2()
+    election.make_result_graphic()
+    election.print_election_plot()
+
 def difference_of_Weighted_VS():
     election = make_circle_Election()
     election.make_result_graphic()

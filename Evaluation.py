@@ -6,23 +6,23 @@ from classes import ElectionResult
 from Election import Election, initializeRandomElection, initializeElection
 from agent import Agent
 from Helper import Helper
-from exampleElections import make_equal_elec, make_Election_1, make_Election_With_extreme_Extremes, make_small_extreme_Elec
+from exampleElections import make_equal_elec, make_Election_1, make_Election_With_extreme_Extremes, make_small_extreme_Elec, make_small_Elec_with_2_options
 import pandas as pd
 
 
 
 evalKindDict = {"dist": "Distance to result", "sqdist": "Squared distance to result", "hap": "Happiness with result", "distw": "Distance to winner", "hww": "Weighted happiness with winner", "hw": "Happiness with winner"}
-eval_list = ["dist"]
+# eval_list = ["dist"]
 # eval_list = ["dist", "sqdist", "rtdist", "hap", "distw", "hww", "hw"]
-# eval_list = ["dist", "sqdist", "rtdist", "GR", "GRW", "HR", "HRW", "hw"]
+eval_list = ["dist", "sqdist", "rtdist", "GRC", "GRCW", "HR", "HRW", "hw"]
 # kind_list = ["RC"]
-# kind_list = ["WR", "WAR", "AV", "RC", "PL"]
-kind_list = ["WR", "WAR", "HR", "AV", "RC", "PL"]
+kind_list = ["WR", "WAR", "HR", "GRC", "AV", "RC", "PL"]
+# kind_list = ["WR", "WAR", "HR"]
 
 
 def method():
     print("HI")
-    makeAHappinessTable(5, 1000, 2, numElec=1, makePlot=True, show=False, name="blub")
+    makeAHappinessTable(5, 100, 2, numElec=10000, makePlot=False, show=True, name="blub")
 
 
 
@@ -37,7 +37,7 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
     for i in range(numElec):
         # election = initializeElection(numOptions,numAgents,numDim, centerPoints=[(0.4, (5,5)), (0.3, (-30,-90)), (0.2, (-60,90)), (0.1, (80, -25))])
         # election = initializeElection(numOptions,numAgents,numDim, [(0.4, (-25,10)), (0.3, (-30,-90)), (0.2, (-60,-90)), (0.1, (99, 99))])
-        # election =make_small_extreme_Elec()
+        # election =make_small_Elec_with_2_options()
         election = initializeElection(numOptions,numAgents,numDim)
         happiness = {}
         variance = {}
@@ -114,7 +114,7 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
     tab.set_fontsize(6)
     tab.scale(1.1, 1)
     plt.title("Random Election with {} agents and {} options.".format(numAgents, numOptions))
-    plt.savefig(name+ ".png", dpi=700)
+    plt.savefig(name+ ".png", dpi=1000)
     if(show):
         plt.show()
 
@@ -122,9 +122,9 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
 def computeHappinessWithResult(election: Election, result: ElectionResult, kind="dist", makePlot=False, linear=False)-> float:
 
 
-    if(kind=="GR" or kind=="WR" or kind=="HR" or kind=="WAR"): #closeness to solution
+    if(kind=="GR" or kind=="GRC" or kind=="WR" or kind=="HR" or kind=="WAR"): #closeness to solution
         return closenessToSolution(election, result, kind=kind)
-    if (kind=="GRW" or kind=="WRW" or kind=="HRW" or kind=="WARW"):  # closeness to solution winner
+    if (kind=="GRW" or kind=="WRW" or kind=="GRCW" or kind=="HRW" or kind=="WARW"):  # closeness to solution winner
         return closenessToSolutionWinner(election, result, kind=kind[:-1])
 
 

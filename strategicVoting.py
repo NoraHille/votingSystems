@@ -37,7 +37,7 @@ def method():
     print("HI")
     # generateStrategicChangeVoting(kind="RC", numOptions=5, numAgents=3, iter=1000)
 
-    stratVotPosStats()
+    stratVotPosStats(rounds=10000)
 
 
 
@@ -86,7 +86,7 @@ def computeStratVotPosForAll(election=None):
     if(election==None):
         election = initializeRandomElection(5, 4, 2)
     dicti= {}
-    for kind in ["AV2", "AV", "WAR2", "WAR"]:
+    for kind in ["WR", "WAR", "AV", "PL", "RC"]:
         stratPos = computePossibilityStratVote(election, kind=kind)
         dicti[kind] = stratPos
         # print(kind, stratPos)

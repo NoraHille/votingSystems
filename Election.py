@@ -26,6 +26,8 @@ class Election:
 
 
 
+
+
     def computeAllResults(self):
         result_list = []
         # result_list.append(self.computeResultPlurality())
@@ -36,7 +38,7 @@ class Election:
         # result_list.append(self.computeResultWAR())
         # result_list.append(self.computeResultWAR(linear=True))
 
-        for kind in ["PL", "RC", "AV", "WR", "WAR", "WLR", "GR", "GRP", "HR", "HLR", "Dist"]:
+        for kind in ["PL", "RC", "AV", "WR", "WAR", "GR", "GRC", "HR"]:
             result_list.append(self.computeBallotResult(kind=kind))
 
         return result_list
@@ -317,8 +319,8 @@ class Election:
             return self.computeBallotResultRC()
         if(kind == "GR"):
             return self.computeGraphic()
-        if (kind == "GRP"):
-            return self.computeGraphicWithOutlierPunishing()
+        if (kind == "GRC"):
+            return self.computeGraphicWithOutlierPunishingCircle()
         return self.computeAdditiveResults(kind)
 
     def computeAdditiveResults(self, kind="WR"):
@@ -342,25 +344,25 @@ class Election:
         agent = Agent(middleCords, self.issue)
         return ElectionResult(agent.pm, "GR")
 
-    def computeGraphicWithOutlierPunishing(self, retPoints=False):
-        middleCoords = self.computeMiddleCoordOfAgents()
-        newPoints = []
-        for ag in self.agents:
-            dist = ag.computeDistancePoint(middleCoords)
-            rtdist = dist**0.5
-            vecFromMidToAgWithLength1 = [(ag.coordinates[i] - middleCoords[i])/dist for i in range(len(middleCoords))]
-            newPoint = [middleCoords[i] + vecFromMidToAgWithLength1[i]*rtdist for i in range(len(middleCoords))]
-            newPoints.append(newPoint)
-
-        trueMiddleCords = [0] * len(self.issue.dimensions)
-        for i in range(len(self.issue.dimensions)):
-            for newPoint in newPoints:
-                trueMiddleCords[i] += newPoint[i] / len(newPoints)
-        agent = Agent(trueMiddleCords, self.issue)
-
-        if (retPoints):
-            return trueMiddleCords, newPoints
-        return ElectionResult(agent.linearPM, "GRP")
+    # def computeGraphicWithOutlierPunishing(self, retPoints=False):
+    #     middleCoords = self.computeMiddleCoordOfAgents()
+    #     newPoints = []
+    #     for ag in self.agents:
+    #         dist = ag.computeDistancePoint(middleCoords)
+    #         rtdist = dist**0.5
+    #         vecFromMidToAgWithLength1 = [(ag.coordinates[i] - middleCoords[i])/dist for i in range(len(middleCoords))]
+    #         newPoint = [middleCoords[i] + vecFromMidToAgWithLength1[i]*rtdist for i in range(len(middleCoords))]
+    #         newPoints.append(newPoint)
+    #
+    #     trueMiddleCords = [0] * len(self.issue.dimensions)
+    #     for i in range(len(self.issue.dimensions)):
+    #         for newPoint in newPoints:
+    #             trueMiddleCords[i] += newPoint[i] / len(newPoints)
+    #     agent = Agent(trueMiddleCords, self.issue)
+    #
+    #     if (retPoints):
+    #         return trueMiddleCords, newPoints
+    #     return ElectionResult(agent.linearPM, "GRP")
 
     def computeGraphicWithOutlierPunishingCircle(self,  retPoints=False):
         middleCoords = self.computeMiddleCoordOfAgents()
@@ -371,6 +373,8 @@ class Election:
         meanDist = totalDist/len(self.agents)
         for ag in self.agents:
             dist = ag.computeDistancePoint(middleCoords)
+            if(dist == 0):
+                dist = 1
             vecFromMidToAgWithLength1 = [(ag.coordinates[i] - middleCoords[i]) / dist for i in range(len(middleCoords))]
             newPoint = [middleCoords[i] + vecFromMidToAgWithLength1[i]*meanDist for i in range(len(middleCoords))]
             newPoints.append(newPoint)
@@ -382,7 +386,7 @@ class Election:
         agent = Agent(trueMiddleCords, self.issue)
         if(retPoints):
             return trueMiddleCords, newPoints
-        return ElectionResult(agent.pm, "GRPC")
+        return ElectionResult(agent.pm, "GRC")
 
 
 
@@ -602,3 +606,13 @@ def makeElectionWithAgentBlocks(issue, agentBlocks):
     for ab in agentBlocks:
         agents.extend(ab.agents)
     return Election(issue, agents, agentBlocks)
+
+def makeElectionFromLists(optionCoords, agentCoords, dim = 2):
+    options = []
+    agents = []
+    for coord in optionCoords:
+        options.append(Option(coord))
+    issue = Issue(options, ['dim']* dim)
+    for coord in agentCoords:
+        agents.append(Agent(coord, issue))
+    return Election(issue, agents)

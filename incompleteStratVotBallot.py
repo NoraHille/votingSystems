@@ -37,28 +37,7 @@ def differentBallotsStratVote():
 
 
 
-def distanceWithBallotInRandomFilledElection(agent: Agent, issue: Issue, numOtherAgents, ballot, kind="WR", doWholeResult=False):
-    numRounds = 10000
-    totalDistance = 0
-    for i in range(numRounds):
-        agents = issue.getRandomAgents(numOtherAgents)
-        agentsVote = copy.deepcopy(agent)
-        agentsVote.setPM(ballot)
-        agents.append(agentsVote)
 
-        election = Election(issue, agents)
-
-        # if(i%125 ==0):
-        #     print(i)
-        #     election.print_election_plot(highlightAgent=3)
-        result = election.computeBallotResult(kind)
-        # how much does the agent like the result?
-        if(doWholeResult):
-            totalDistance += distanceOfAgentToResult(agent, result)
-        else:
-            totalDistance += preferanceOfAgentOfWinner(agent, result)
-    totalDistance /= numRounds
-    return totalDistance
 
 def distanceWithBallotInAllPosFilledElection(agent: Agent, issue: Issue, numOtherAgents, ballot, kind="WR", doWholeResult=False):
     numRounds = 81**numOtherAgents #We seperate the field into 81 distinct positions for the other agents.

@@ -16,7 +16,7 @@ class Agent(object):
         self.coordinates = coordinates  # coordinates is a list of real numbers, each number being associated with a dimension in the issue
         self.pm = self.create_normalized_distance_PM()
         self.hm = self.create_distance_PM()
-        # self.linearPM = self.create_linear_PM(self.issue)
+        self.linearPM = self.create_linear_PM(self.issue)
         # self.truelinPM = self.create_true_linear_PM(self.issue)
         # self.truePM = self.create_true_PM(self.issue)
         # self.distPM = self.create_distance_PM(self.issue)
@@ -36,27 +36,27 @@ class Agent(object):
     def setIssue(self, issue):
         self.issue = issue
 
-    # def create_PM(self, issue):
-    #     pm = {}
-    #     normalization_faktor = 0;
-    #     for op in issue.options:
-    #
-    #         dist = self.computeDistance(op)
-    #         if (dist == 0):
-    #             dist = 0.0000000000000000000000001
-    #         pref = pow(dist, -1)  # raise to the power of -1 to make agents prefer the option with the lowest distance
-    #         pm[op.name] = pref;
-    #         normalization_faktor += pref;
-    #     # normalize PM so it adds up to 1
-    #     sum_of_preferences = 0
-    #     for (op_name, pref) in pm.items():
-    #         normalized_pref = pref / normalization_faktor
-    #         pm[op_name] = normalized_pref
-    #         sum_of_preferences += normalized_pref
-    #     # if(sum_of_preferences != 1):
-    #     # print("Something went wrong with the normalization, the normalized value is ", sum_of_preferences)
-    #     # print("The PM of an agent is: ", pm)
-    #     return pm
+    def create_PM(self, issue):
+        pm = {}
+        normalization_faktor = 0;
+        for op in issue.options:
+
+            dist = self.computeDistance(op)
+            if (dist == 0):
+                dist = 0.0000000000000000000000001
+            pref = pow(dist, -1)  # raise to the power of -1 to make agents prefer the option with the lowest distance
+            pm[op.name] = pref;
+            normalization_faktor += pref;
+        # normalize PM so it adds up to 1
+        sum_of_preferences = 0
+        for (op_name, pref) in pm.items():
+            normalized_pref = pref / normalization_faktor
+            pm[op_name] = normalized_pref
+            sum_of_preferences += normalized_pref
+        # if(sum_of_preferences != 1):
+        # print("Something went wrong with the normalization, the normalized value is ", sum_of_preferences)
+        # print("The PM of an agent is: ", pm)
+        return pm
     #
     # def create_true_PM(self, issue):
     #     pm = {}
@@ -89,36 +89,36 @@ class Agent(object):
     #         pm[op_name] = inverted_pref
     #
     #     return pm
-    #
-    # def create_linear_PM(self, issue):
-    #     pm = {}
-    #     sumOfDist = 0;
-    #     for op in issue.options:
-    #
-    #         dist = self.computeDistance(op)
-    #         if (dist == 0):
-    #             dist = 0.0000000001
-    #         pref = dist
-    #         pm[op.name] = pref;
-    #         sumOfDist += dist;
-    #     # linearly invert
-    #
-    #     sum_of_inv_preferences = 0
-    #     for (op_name, pref) in pm.items():
-    #         inverted_pref = sumOfDist - pref
-    #         pm[op_name] = inverted_pref
-    #         sum_of_inv_preferences += inverted_pref
-    #
-    #     # normalize PM so it adds up to 1
-    #     sum_of_preferences = 0
-    #     for (op_name, pref) in pm.items():
-    #         normalized_pref = pref / sum_of_inv_preferences
-    #         pm[op_name] = normalized_pref
-    #         sum_of_preferences += normalized_pref
-    #     # if(sum_of_preferences != 1):
-    #     # print("Something went wrong with the normalization, the normalized value is ", sum_of_preferences)
-    #     # print("The PM of an agent is: ", pm)
-    #     return pm
+
+    def create_linear_PM(self, issue):
+        pm = {}
+        sumOfDist = 0;
+        for op in issue.options:
+
+            dist = self.computeDistance(op)
+            if (dist == 0):
+                dist = 0.0000000001
+            pref = dist
+            pm[op.name] = pref;
+            sumOfDist += dist;
+        # linearly invert
+
+        sum_of_inv_preferences = 0
+        for (op_name, pref) in pm.items():
+            inverted_pref = sumOfDist - pref
+            pm[op_name] = inverted_pref
+            sum_of_inv_preferences += inverted_pref
+
+        # normalize PM so it adds up to 1
+        sum_of_preferences = 0
+        for (op_name, pref) in pm.items():
+            normalized_pref = pref / sum_of_inv_preferences
+            pm[op_name] = normalized_pref
+            sum_of_preferences += normalized_pref
+        # if(sum_of_preferences != 1):
+        # print("Something went wrong with the normalization, the normalized value is ", sum_of_preferences)
+        # print("The PM of an agent is: ", pm)
+        return pm
 
 
     def create_normalized_distance_PM(self):
@@ -254,6 +254,7 @@ class Agent(object):
         return ballot
 
     def getHappinessBallot(self):
+
 
         return self.create_distance_PM()
 
