@@ -37,7 +37,7 @@ def method():
     print("HI")
     # generateStrategicChangeVoting(kind="RC", numOptions=5, numAgents=3, iter=1000)
 
-    stratVotPosStats(rounds=10000)
+    stratVotPosStats(rounds=100)
 
 
 
@@ -76,7 +76,7 @@ def stratVotPosStats(rounds=20):
             change = dicti["Change voters"]/totalAttemps * 100
             over = dicti["Over voters"]/totalAttemps * 100
 
-        print("In {} unhappy voters failed {} %, overvoted {} % (total {}) and changevoted {} % (total {}) of the time. Attemptrate = {}. Nr of attemps: {}. There were {} changes.".format(kind, failed, over, dicti["Over voters"], change, dicti["Change voters"], attemptRate, totalAttemps,dicti["Changed"] ))
+        print("In {} unhappy voters failed {} %, succeded {} %,  overvoted {} % (total {}) and changevoted {} % (total {}) of the time. Attemptrate = {}. Nr of attemps: {}. There were {} changes.".format(kind, failed, 100 - failed, over, dicti["Over voters"], change, dicti["Change voters"], attemptRate, totalAttemps,dicti["Changed"] ))
 
 
 
@@ -86,7 +86,7 @@ def computeStratVotPosForAll(election=None):
     if(election==None):
         election = initializeRandomElection(5, 4, 2)
     dicti= {}
-    for kind in ["WR", "WAR", "AV", "PL", "RC"]:
+    for kind in ["WR", "WAR", "WAR2", "AV", "AV2", "PL", "RC"]:
         stratPos = computePossibilityStratVote(election, kind=kind)
         dicti[kind] = stratPos
         # print(kind, stratPos)
@@ -117,7 +117,8 @@ def computePossibilityStratVote(election: Election, kind: str):
         PM = ag.pm
         coordinates = ag.coordinates
         personalWinners = Helper.getWinner(PM)
-        if(any(win in winners for win in personalWinners)): # Agent is already happy with the result -> no strat vote necessary
+        # if(any(win in winners for win in personalWinners)): # Agent is already happy with the result -> no strat vote necessary
+        if(personalWinners == winners):
             contendet += len(election.issue.options)
             continue
         else:
@@ -127,6 +128,11 @@ def computePossibilityStratVote(election: Election, kind: str):
                     ag.setNumApp(num + 1)
                 # if (kind == "WAR"):
                 #     ag.setNumApp(num + 1)
+                if(kind == "RC"):
+                    fakePM = copy.deepcopy(PM)
+                    fakePM[op.name] = 1
+                    ag.setPM(fakePM)  # The agent pretends to have this option as their prefered choice
+
                 else:
                     fakePM = Helper.getEmptyDict(list(PM.keys()))
                     fakePM[op.name] = 1
@@ -137,11 +143,14 @@ def computePossibilityStratVote(election: Election, kind: str):
                 if(op.name in newWinners and op.name not in winners):
                     changedSomething += 1
 
-                if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
-                    sucOverVotes += 1
-                    continue
+                # if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
+                #     sucOverVotes += 1
+                #     continue
                 if(resultImproved(PM, winners, newWinners)): #The Agent could improve their happiness with the result
-                    sucChangeVotes +=1
+                    if(op.name in personalWinners):
+                        sucOverVotes += 1
+                    else:
+                        sucChangeVotes +=1
                     continue
                 failedStratVotes +=1 #The Agent could not improve the result of the vote through strat voting
             ag.setCoordinates(coordinates) #We set the agent to the old coordinates

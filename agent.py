@@ -42,11 +42,14 @@ class Agent(object):
         for op in issue.options:
 
             dist = self.computeDistance(op)
+            print(op.name, ":", dist)
             if (dist == 0):
                 dist = 0.0000000000000000000000001
             pref = pow(dist, -1)  # raise to the power of -1 to make agents prefer the option with the lowest distance
             pm[op.name] = pref;
             normalization_faktor += pref;
+
+        # print("classHapp", pm)
         # normalize PM so it adds up to 1
         sum_of_preferences = 0
         for (op_name, pref) in pm.items():
@@ -96,11 +99,13 @@ class Agent(object):
         for op in issue.options:
 
             dist = self.computeDistance(op)
+            if(dist> sumOfDist):
+                sumOfDist = dist
             if (dist == 0):
                 dist = 0.0000000001
             pref = dist
             pm[op.name] = pref;
-            sumOfDist += dist;
+        #sumOfDist += dist;
         # linearly invert
 
         sum_of_inv_preferences = 0
@@ -108,6 +113,8 @@ class Agent(object):
             inverted_pref = sumOfDist - pref
             pm[op_name] = inverted_pref
             sum_of_inv_preferences += inverted_pref
+
+        # print("linHapp", pm)
 
         # normalize PM so it adds up to 1
         sum_of_preferences = 0
@@ -136,8 +143,10 @@ class Agent(object):
             pm[op.name] = pref;
         maxDist = math.sqrt(2*((2*dimensionSize)**2))
         for (op_name, pref) in pm.items():
-            inverted_pref = (maxDist - pref)/maxDist
+            inverted_pref = (maxDist - pref)
             pm[op_name] = inverted_pref
+
+
 
         return pm
 

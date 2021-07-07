@@ -20,12 +20,13 @@ from exampleElections import make_Election_1, make_small_Election, make_small_El
     make_spreaded_circle_Election, make_outlier_circle_Election, make_strat_Election_1, make_upperRightCoordsElec, \
     make_Election_With_Extremes, make_Election_With_extreme_Extremes, make_small_extreme_Elec_2, \
     make_small_Elec_with_2_options, make_small_Elec_with_2_options_2, make_small_Elec_with_2_options_2_left, \
-    make_small_Elec_with_2_options_2_right, make_small_Elec_with_2_options_2_right2
+    make_small_Elec_with_2_options_2_right, make_small_Elec_with_2_options_2_right2, make_happiness_test_election, \
+    make_happiness_test_election_small
 
 
 def method():
 
-    compare_different_pref_computations(2)
+    compare_different_happ_comp(2)
 
 
 
@@ -78,7 +79,36 @@ def method():
 #         agents.append(Agent([10, 50], issue1)) #(B,A)
 def compare_different_pref_computations(numOp):
     el = initializeRandomElection(4, 100, 2)
+
     el.make_result_graphic()
+
+    print("distPM", el.agents[0].pm)
+    # print("distPM WAR", el.agents[0].getBallot("WAR"))
+    print("linPM", el.agents[0].linearPM)
+    multPM = el.agents[0].create_PM(el.agents[0].issue)
+    print("multPM", multPM)
+
+
+def compare_different_happ_comp(numOp):
+    el = make_happiness_test_election()
+    ax = plt.subplot(1, 1, 1)
+    ax.set_aspect('equal')
+    el.print_election_plot(colorPlurality=True)
+
+    print("distHapp", el.agents[0].hm)
+
+    print("distPM", el.agents[0].pm)
+    # print("distPM WAR", el.agents[0].getBallot("WAR"))
+    print("linPM", el.agents[0].linearPM)
+    multPM = el.agents[0].create_PM(el.agents[0].issue)
+    print("multPM", multPM)
+
+    el = make_happiness_test_election_small()
+    ax = plt.subplot(1, 1, 1)
+    ax.set_aspect('equal')
+    el.print_election_plot(colorPlurality=True)
+
+    print("distHapp", el.agents[0].hm)
 
     print("distPM", el.agents[0].pm)
     # print("distPM WAR", el.agents[0].getBallot("WAR"))

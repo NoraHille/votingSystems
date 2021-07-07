@@ -1,7 +1,7 @@
 
 from classes import Issue, makeRandomOptions, makeRandomCoordinates, Option
 from agent import Agent
-from Election import makeElectionWithAgentBlocks, Election
+from Election import makeElectionWithAgentBlocks, Election, makeElectionFromLists
 from agentBlock import AgentBlock
 
 
@@ -356,3 +356,9 @@ def make_small_Elec_with_2_options_2_right2(): # Problem election :(
     agents.append(Agent([70, 90], issue1))
     agents.append(Agent([60, 90], issue1))
     return Election(issue1, agents)
+
+def make_happiness_test_election():
+    return makeElectionFromLists([[60, 60], [30, -30], [-20, 20]], [[0,0]])
+
+def make_happiness_test_election_small():
+    return makeElectionFromLists([[30, 30], [15, -15], [-10, 10]], [[0, 0]])

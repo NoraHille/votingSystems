@@ -8,21 +8,22 @@ from agent import Agent
 from Helper import Helper
 from exampleElections import make_equal_elec, make_Election_1, make_Election_With_extreme_Extremes, make_small_extreme_Elec, make_small_Elec_with_2_options
 import pandas as pd
+import copy
 
 
 
 evalKindDict = {"dist": "Distance to result", "sqdist": "Squared distance to result", "hap": "Happiness with result", "distw": "Distance to winner", "hww": "Weighted happiness with winner", "hw": "Happiness with winner"}
 # eval_list = ["dist"]
 # eval_list = ["dist", "sqdist", "rtdist", "hap", "distw", "hww", "hw"]
-eval_list = ["dist", "sqdist", "rtdist", "GRC", "GRCW", "HR", "HRW", "hw"]
+eval_list = ["dist", "sqdist", "rtdist",  "hw", "HR", "HRW","GRC", "GRCW"]
 # kind_list = ["RC"]
-kind_list = ["WR", "WAR", "HR", "GRC", "AV", "RC", "PL"]
+kind_list = ["PL", "AV", "RC", "WR", "WAR", "HR", "GRC"]
 # kind_list = ["WR", "WAR", "HR"]
 
 
 def method():
     print("HI")
-    makeAHappinessTable(5, 100, 2, numElec=10000, makePlot=False, show=True, name="blub")
+    makeAHappinessTable(5, 100, 2, numElec=100, makePlot=False, show=True, name="blub")
 
 
 
@@ -61,10 +62,87 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
                 #     linear = True
 
                 happiness[eval].append(computeHappinessWithResult(election, result, kind=eval,makePlot=makePlot, linear=linear))
-                variance[eval].append(computeVarianceOfHappiness(election, result, kind=eval, linear=linear))
+                # variance[eval].append(computeVarianceOfHappiness(election, result, kind=eval, linear=linear))
 
         happDict_list.append(happiness)
         varDict_list.append(variance)
+
+    # happiness = {}
+    # variance = {}
+    # for eval in eval_list:
+    #     happiness[eval] = [0] * len(happDict_list[0][eval])
+    #     for hap in happDict_list:
+    #         for i in range(len(hap[eval])):
+    #             happiness[eval][i] += hap[eval][i]/numElec
+    #
+    #     # for i in range(len(happiness[eval])):
+    #     #     happiness[eval][i] /= numElec
+    #
+    #
+    #     # variance[eval] = [0] * len(varDict_list[0][eval])
+    #     # for var in varDict_list:
+    #     #     for i in range(len(var[eval])):
+    #     #         variance[eval][i] += var[eval][i]/numElec
+    #
+    #     # for i in range(len(variance[eval])):
+    #     #     variance[eval][i] /= numElec
+    #
+    #
+    #
+    #
+    #
+    # column_labels = []
+    # data = []
+    #
+    # if (ax == None):
+    #     _, ax = plt.subplots(1, 1)
+    #
+    #
+    #
+    # for eval_type in eval_list:
+    #     column_labels.append(eval_type)
+    #     data.append([round(num, 3) for num in happiness[eval_type]])
+    #     # column_labels.append("var("+ eval_type + ")")
+    #     # data.append([round(num, 5) for num in variance[eval_type]])
+    #
+    # data = np.array(data).T.tolist()
+    # df = pd.DataFrame(data, columns=column_labels)
+    # ax.axis('tight')
+    # ax.axis('off')
+    # tab = ax.table(cellText=df.values, colLabels=df.columns, rowLabels=kinds_for_eval_list,
+    #                loc="center")
+    # tab.auto_set_font_size(False)
+    # tab.set_fontsize(6)
+    # tab.scale(1.1, 1)
+    # plt.title("Random Election with {} agents and {} options.".format(numAgents, numOptions))
+    # plt.savefig(name+ ".png", dpi=1000)
+    # if(show):
+    #     plt.show()
+    #
+
+
+    #
+    # for eval in eval_list:
+    #     happiness[eval] = [0] * len(happDict_list[0][eval])
+    #     for hap in happDict_list:
+    #         for i in range(len(hap[eval])):
+    #             happiness[eval][i] += hap[eval][i]/numElec
+
+        # for i in range(len(happiness[eval])):
+        #     happiness[eval][i] /= numElec
+
+
+        # variance[eval] = [0] * len(varDict_list[0][eval])
+        # for var in varDict_list:
+        #     for i in range(len(var[eval])):
+        #         variance[eval][i] += var[eval][i]/numElec
+
+        # for i in range(len(variance[eval])):
+        #     variance[eval][i] /= numElec
+
+
+    #---------------------------------------------------------------------------------
+
 
     happiness = {}
     variance = {}
@@ -72,23 +150,28 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
         happiness[eval] = [0] * len(happDict_list[0][eval])
         for hap in happDict_list:
             for i in range(len(hap[eval])):
-                happiness[eval][i] += hap[eval][i]/numElec
+                happiness[eval][i] += (hap[eval][i] / numElec)
+
+    tieHapp = {}
+    for eval in happiness.keys():
+        tieHapp[eval] = happiness[eval][0]
+        print(eval, happiness[eval][0])
+
+    for eval in eval_list:
+        if (tieHapp[eval] == 0):
+            tieHapp[eval] = 1
+        for i in range(len(happiness[eval])):
+            # if(i ==0):
+            #     print(happiness[eval][i])
+            #
+
+            happiness[eval][i] /= tieHapp[eval]
+            # if (i == 0):
+            #     print(happiness[eval][i], tieHapp[eval])
+
 
         # for i in range(len(happiness[eval])):
         #     happiness[eval][i] /= numElec
-
-
-        variance[eval] = [0] * len(varDict_list[0][eval])
-        for var in varDict_list:
-            for i in range(len(var[eval])):
-                variance[eval][i] += var[eval][i]/numElec
-
-        # for i in range(len(variance[eval])):
-        #     variance[eval][i] /= numElec
-
-
-
-
 
     column_labels = []
     data = []
@@ -100,9 +183,9 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
 
     for eval_type in eval_list:
         column_labels.append(eval_type)
-        data.append([round(num, 3) for num in happiness[eval_type]])
-        column_labels.append("var("+ eval_type + ")")
-        data.append([round(num, 5) for num in variance[eval_type]])
+        data.append([round(num, 6) for num in happiness[eval_type]])
+        # column_labels.append("var("+ eval_type + ")")
+        # data.append([round(num, 5) for num in variance[eval_type]])
 
     data = np.array(data).T.tolist()
     df = pd.DataFrame(data, columns=column_labels)
@@ -113,10 +196,12 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
     tab.auto_set_font_size(False)
     tab.set_fontsize(6)
     tab.scale(1.1, 1)
-    plt.title("Random Election with {} agents and {} options.".format(numAgents, numOptions))
-    plt.savefig(name+ ".png", dpi=1000)
+    # plt.title("Random Election with {} agents and {} options.".format(numAgents, numOptions))
+    plt.title("Quality Measures")
+    plt.savefig("QM10000.png", dpi=1000)
     if(show):
         plt.show()
+
 
 
 def computeHappinessWithResult(election: Election, result: ElectionResult, kind="dist", makePlot=False, linear=False)-> float:
@@ -262,9 +347,6 @@ def closenessToSolutionWinner(elec: Election, result: ElectionResult, kind="HR")
         return 1
     else:
         return 0
-
-
-
 
 
 def happinessOfAgentWithResult(agent: Agent, result: ElectionResult, linear=False)-> float:

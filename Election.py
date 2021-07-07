@@ -70,11 +70,12 @@ class Election:
         else:
             if (colorPlurality):
                 plt.scatter(ag_x, ag_y, s=10, c=colormap[agentCat])
+                plt.scatter(ag_x, ag_y, s=10, c="black")
 
             else:
 
                 optionNameList = [op.name for op in self.issue.options]
-                sizer = 50*1.0/(scale)
+                sizer = 10*1.0/(scale)
                 exp = 2
 
                 for ag in self.agents:
