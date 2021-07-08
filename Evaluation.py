@@ -15,7 +15,8 @@ import copy
 evalKindDict = {"dist": "Distance to result", "sqdist": "Squared distance to result", "hap": "Happiness with result", "distw": "Distance to winner", "hww": "Weighted happiness with winner", "hw": "Happiness with winner"}
 # eval_list = ["dist"]
 # eval_list = ["dist", "sqdist", "rtdist", "hap", "distw", "hww", "hw"]
-eval_list = ["dist", "sqdist", "rtdist",  "hw", "HR", "HRW","GRC", "GRCW"]
+eval_list = ["dist", "sqdist", "rtdist",  "hw"]
+# eval_list = ["dist", "sqdist", "rtdist",  "hw", "HR", "HRW","GRC", "GRCW"]
 # kind_list = ["RC"]
 kind_list = ["PL", "AV", "RC", "WR", "WAR", "HR", "GRC"]
 # kind_list = ["WR", "WAR", "HR"]
@@ -23,11 +24,11 @@ kind_list = ["PL", "AV", "RC", "WR", "WAR", "HR", "GRC"]
 
 def method():
     print("HI")
-    makeAHappinessTable(5, 100, 2, numElec=100, makePlot=False, show=True, name="blub")
+    make_tie_normalized_Var_table(5, 100, 2, numElec=10000, makePlot=False, show=True, name="VarTable10000")
 
 
 
-def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, show = True, makePlot=False, name="happinesTable" ):
+def computeHappAndVar(numOptions, numAgents, numDim, numElec= 1, makePlot=False, noHap= False, noVar=False):
 
     kinds_for_eval_list = ["tie"]
     kinds_for_eval_list.extend(kind_list)
@@ -58,53 +59,58 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
                     result = election.computeBallotResult(kind)
 
                 linear = False
-                # if(eval in ["WLR", "WALR", "GR"]):
-                #     linear = True
 
-                happiness[eval].append(computeHappinessWithResult(election, result, kind=eval,makePlot=makePlot, linear=linear))
-                # variance[eval].append(computeVarianceOfHappiness(election, result, kind=eval, linear=linear))
+                if(not noHap):
+                    happiness[eval].append(computeHappinessWithResult(election, result, kind=eval,makePlot=makePlot, linear=linear))
+                if(not noVar):
+                    variance[eval].append(computeVarianceOfHappiness(election, result, kind=eval, linear=linear))
 
         happDict_list.append(happiness)
         varDict_list.append(variance)
+    return happDict_list, varDict_list, kinds_for_eval_list
 
-    # happiness = {}
-    # variance = {}
-    # for eval in eval_list:
-    #     happiness[eval] = [0] * len(happDict_list[0][eval])
-    #     for hap in happDict_list:
-    #         for i in range(len(hap[eval])):
-    #             happiness[eval][i] += hap[eval][i]/numElec
-    #
-    #     # for i in range(len(happiness[eval])):
-    #     #     happiness[eval][i] /= numElec
-    #
-    #
-    #     # variance[eval] = [0] * len(varDict_list[0][eval])
-    #     # for var in varDict_list:
-    #     #     for i in range(len(var[eval])):
-    #     #         variance[eval][i] += var[eval][i]/numElec
-    #
-    #     # for i in range(len(variance[eval])):
-    #     #     variance[eval][i] /= numElec
-    #
-    #
-    #
-    #
-    #
-    # column_labels = []
-    # data = []
-    #
-    # if (ax == None):
-    #     _, ax = plt.subplots(1, 1)
-    #
-    #
-    #
-    # for eval_type in eval_list:
-    #     column_labels.append(eval_type)
-    #     data.append([round(num, 3) for num in happiness[eval_type]])
-    #     # column_labels.append("var("+ eval_type + ")")
-    #     # data.append([round(num, 5) for num in variance[eval_type]])
-    #
+
+def makeWholeQualHapTable(numOptions, numAgents, numDim, numElec= 1, ax = None, show = True, makePlot=False, name="evalTable"):
+    happDict_list, varDict_list, kinds_for_eval_list = computeHappAndVar(numOptions, numAgents, numDim, numElec=numElec,
+                                                                         makePlot=False)
+    happiness = {}
+    variance = {}
+    for eval in eval_list:
+        happiness[eval] = [0] * len(happDict_list[0][eval])
+        for hap in happDict_list:
+            for i in range(len(hap[eval])):
+                happiness[eval][i] += hap[eval][i]/numElec
+
+        # for i in range(len(happiness[eval])):
+        #     happiness[eval][i] /= numElec
+
+
+        variance[eval] = [0] * len(varDict_list[0][eval])
+        for var in varDict_list:
+            for i in range(len(var[eval])):
+                variance[eval][i] += var[eval][i]/numElec
+
+        # for i in range(len(variance[eval])):
+        #     variance[eval][i] /= numElec
+
+
+
+
+
+    column_labels = []
+    data = []
+
+    if (ax == None):
+        _, ax = plt.subplots(1, 1)
+
+
+
+    for eval_type in eval_list:
+        column_labels.append(eval_type)
+        data.append([round(num, 3) for num in happiness[eval_type]])
+        column_labels.append("var("+ eval_type + ")")
+        data.append([round(num, 5) for num in variance[eval_type]])
+
     # data = np.array(data).T.tolist()
     # df = pd.DataFrame(data, columns=column_labels)
     # ax.axis('tight')
@@ -118,7 +124,9 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
     # plt.savefig(name+ ".png", dpi=1000)
     # if(show):
     #     plt.show()
-    #
+
+    makeTable(data, column_labels, kinds_for_eval_list, name=name, title="Random Election with {} agents and {} options.".format(numAgents, numOptions),  ax=None, show=show)
+
 
 
     #
@@ -143,6 +151,8 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
 
     #---------------------------------------------------------------------------------
 
+def make_tie_normalized_Qulaity_table(numOptions, numAgents, numDim, numElec= 1, ax = None, show = True, makePlot=False, name="qualityTable"):
+    happDict_list, varDict_list, kinds_for_eval_list = computeHappAndVar(numOptions, numAgents, numDim, numElec= numElec, makePlot=False, noVar=True)
 
     happiness = {}
     variance = {}
@@ -176,16 +186,67 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
     column_labels = []
     data = []
 
-    if (ax == None):
-        _, ax = plt.subplots(1, 1)
-
-
-
     for eval_type in eval_list:
         column_labels.append(eval_type)
         data.append([round(num, 6) for num in happiness[eval_type]])
         # column_labels.append("var("+ eval_type + ")")
         # data.append([round(num, 5) for num in variance[eval_type]])
+
+    makeTable(data, column_labels, kinds_for_eval_list, name, title="Quality measures", ax=None, show=show)
+
+
+def make_tie_normalized_Var_table(numOptions, numAgents, numDim, numElec= 1, ax = None, show = True, makePlot=False, name="qualityTable"):
+    happDict_list, varDict_list, kinds_for_eval_list = computeHappAndVar(numOptions, numAgents, numDim, numElec= numElec, makePlot=False, noHap=True)
+
+    happiness = {}
+    variance = {}
+    for eval in eval_list:
+        # happiness[eval] = [0] * len(happDict_list[0][eval])
+        # for hap in happDict_list:
+        #     for i in range(len(hap[eval])):
+        #         happiness[eval][i] += (hap[eval][i] / numElec)
+
+        variance[eval] = [0] * len(varDict_list[0][eval])
+        for var in varDict_list:
+            for i in range(len(var[eval])):
+                variance[eval][i] += var[eval][i] / numElec
+
+    tieVar= {}
+    for eval in variance.keys():
+        tieVar[eval] = variance[eval][0]
+        print(eval, variance[eval][0])
+
+    for eval in eval_list:
+        if (tieVar[eval] == 0):
+            tieVar[eval] = 1
+        for i in range(len(variance[eval])):
+            # if(i ==0):
+            #     print(happiness[eval][i])
+            #
+
+            variance[eval][i] /= tieVar[eval]
+            # if (i == 0):
+            #     print(happiness[eval][i], tieHapp[eval])
+
+
+        # for i in range(len(happiness[eval])):
+        #     happiness[eval][i] /= numElec
+
+    column_labels = []
+    data = []
+
+    for eval_type in eval_list:
+        # column_labels.append(eval_type)
+        # data.append([round(num, 6) for num in happiness[eval_type]])
+        column_labels.append("var("+ eval_type + ")")
+        data.append([round(num, 5) for num in variance[eval_type]])
+
+    makeTable(data, column_labels, kinds_for_eval_list, name, title="Imbalance measures", ax=None, show=show)
+
+def makeTable(data, column_labels, kinds_for_eval_list, name, title="Table", ax=None, show=True):
+
+    if (ax == None):
+        _, ax = plt.subplots(1, 1)
 
     data = np.array(data).T.tolist()
     df = pd.DataFrame(data, columns=column_labels)
@@ -197,8 +258,8 @@ def makeAHappinessTable(numOptions, numAgents, numDim, numElec= 1, ax = None, sh
     tab.set_fontsize(6)
     tab.scale(1.1, 1)
     # plt.title("Random Election with {} agents and {} options.".format(numAgents, numOptions))
-    plt.title("Quality Measures")
-    plt.savefig("QM10000.png", dpi=1000)
+    plt.title(title)
+    plt.savefig("{}.png".format(name), dpi=1000)
     if(show):
         plt.show()
 
@@ -282,7 +343,8 @@ def computeVarianceOfHappiness(election: Election, result: ElectionResult, kind=
     # if(kind=="GS" or kind=="GSW"): #closeness to graphic solution
     #     return -1
 
-    mu = computeHappinessWithResult(election, result, kind=kind, linear=linear)/len(election.agents)
+    mu = computeHappinessWithResult(election, result, kind=kind, linear=linear)
+
 
     variance = 0
     agentNum = len(election.agents) * 1.0
@@ -303,6 +365,8 @@ def computeVarianceOfHappiness(election: Election, result: ElectionResult, kind=
             variance += (rootDistanceOfAgentToResult(agent, result, linear=linear) - mu) ** 2
         if (kind == "distw"):
             variance += (distanceOfAgentToWinner(agent, result, linear=linear) - mu) ** 2
+    if(kind=="hw"):
+        print(variance)
 
     return variance/agentNum
 
@@ -375,7 +439,7 @@ def rootDistanceOfAgentToResult(agent: Agent, result: ElectionResult, linear=Fal
     distance = 0
     for op_name in PM.keys():
         distance += (abs(PM[op_name]-result.normalizedRanking[op_name]))**0.5
-
+    print(distance)
     return distance
 
 def squaredDistanceOfAgentToResult(agent: Agent, result: ElectionResult, linear=False)-> float:
@@ -385,6 +449,7 @@ def squaredDistanceOfAgentToResult(agent: Agent, result: ElectionResult, linear=
     distance = 0
     for op_name in PM.keys():
         distance += (PM[op_name]-result.normalizedRanking[op_name])**2
+    print(distance)
 
     return distance
 

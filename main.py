@@ -14,7 +14,8 @@ from classes import Option, Issue
 from agentBlock import AgentBlock
 from agent import Agent
 from Helper import Helper
-from Election import Election, initializeRandomElection, makeElectionWithAgentBlocks, initializeElection
+from Election import Election, initializeRandomElection, makeElectionWithAgentBlocks, initializeElection, \
+    makeElectionFromLists
 from strategicVoting import generateStrategicVoting, computePossibilityStratVote
 from exampleElections import make_Election_1, make_small_Election, make_small_Election_1, make_circle_Election, \
     make_spreaded_circle_Election, make_outlier_circle_Election, make_strat_Election_1, make_upperRightCoordsElec, \
@@ -25,8 +26,18 @@ from exampleElections import make_Election_1, make_small_Election, make_small_El
 
 
 def method():
+    # election = makeElectionFromLists([[-70.1455260958462, 20.124191842572657], [-5.281239482406775, -87.90495709142354],
+    #                                   [6.21861745511039, 83.40433823474163], [62.41597893725367, 24.121009070918518],
+    #                                   [43.28147560566842, 77.5295351759055], [-85.27905616346456, -45.95022061240257]],
+    #                                  [[43.805628286292375, 85.37279882826718], [89.63195055077085, -10.904785342326988],
+    #                                   [-42.42574211692567, 15.116941213589044], [-27.846394001983256, -82.782698929622],
+    #                                   [-43.95824535122448, -11.704865168128364]])
 
-    compare_different_happ_comp(2)
+    election = makeElectionFromLists([[68.11781073164752, -54.69841632513515], [79.27224626379342, -10.658832537058032], [-66.70579514750838, 93.74159928392103], [85.36793199486385, -42.665959458672]], [[-48.87222697379694, 46.293515643470414], [56.26047080651105, 2.6110771617346558], [63.64427320684868, 56.04820599316707]])
+
+    election.print_election_plot(colorPlurality=True)
+
+
 
 
 

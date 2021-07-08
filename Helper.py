@@ -7,7 +7,7 @@ colormap = np.array(['teal', 'purple', 'yellow', 'steelblue', 'green',  'pink', 
 dimensionSize = 100
 alphabet_string = string.ascii_uppercase + string.ascii_lowercase
 alphabet_list = list(alphabet_string)
-kindDict = {"WR": "Weighted Ranking", "WLR": "Weightes Linear Ranking", "AV": "Approval Voting", "PL": "Plurality Voting", "WAR": "Weighted Approval Ranking", "WALR": "Weighted Approval Linear Ranking", "RC": "Ranked Choice", "tie": "Base Tie", "GR": "Graphic", "GRP": "Graphic Punishing", "GRC": "Graphic Pun Cirl", "HR": "Happiness Ranking", "HLR": "lin Happiness Ranking", "Dist": "Distance"}
+kindDict = {"WR": "Weighted Ranking", "WLR": "Weighted Linear Ranking", "AV": "Approval Voting", "PL": "Plurality Voting", "WAR": "Weighted Approval Ranking", "WALR": "Weighted Approval Linear Ranking", "RC": "Ranked Choice", "tie": "Base Tie", "GR": "Graphic", "GRP": "Graphic Punishing", "GRC": "Graphic Pun Cirl", "HR": "Happiness Ranking", "HLR": "lin Happiness Ranking", "Dist": "Distance"}
 
 
 

@@ -12,8 +12,8 @@ from time import time
 
 from classes import Option, Issue, Agent, dimensionSize, colormap, alphabet_list
 from Evaluation import  happinessOfAgentWithResult, distanceOfAgentToResult, distanceOfAgentToWinner
-from Helper import  Helper
-from Election import Election, initializeRandomElection, initializeElection
+from Helper import  Helper, kindDict
+from Election import Election, initializeRandomElection, initializeElection, makeElectionFromLists
 from exampleElections import make_small_Election_1, make_Election_1, make_strat_Election_1, make_strat_Election_2, make_app_strat_Election, make_small_Election_3
 
 
@@ -37,7 +37,7 @@ def method():
     print("HI")
     # generateStrategicChangeVoting(kind="RC", numOptions=5, numAgents=3, iter=1000)
 
-    stratVotPosStats(rounds=100)
+    stratVotPosStats(rounds=1)
 
 
 
@@ -48,24 +48,48 @@ def method():
 
 
 def stratVotPosStats(rounds=20):
-    numAg = 4
-    numOp = 5
+
 
     resultDict = {}
     for i in range(rounds):
+
+        numAg = random.randint(5,8)
+        numOp = random.randint(3,5)
+
         election = initializeRandomElection(numOp, numAg, 2)
+        # AV Debug election
+        # election = makeElectionFromLists([[68.11781073164752, -54.69841632513515], [79.27224626379342, -10.658832537058032], [-66.70579514750838, 93.74159928392103], [85.36793199486385, -42.665959458672]], [[-48.87222697379694, 46.293515643470414], [56.26047080651105, 2.6110771617346558], [63.64427320684868, 56.04820599316707]])
+        # RC Debig election:
+        # election = makeElectionFromLists([[99.88279845178087, 38.66232472960317], [-27.748031539042856, -95.66399503104836], [58.67792783306206, 74.27155974031552], [-37.17169913551679, -48.17379185653974], [-45.84478594452983, -9.949371032552975]], [[-53.07293905990953, 81.05405654350821], [95.60373761120536, 83.3061603830048], [77.1257137987495, -88.11627515357986], [-62.259665379563664, -60.883800722961176]])
+
+
         newDict = computeStratVotPosForAll(election)
         for (kind, dicti) in newDict.items():
             if( kind not in resultDict):
-                resultDict[kind] = {"Over voters": 0, "Change voters": 0, "failed": 0, "didn't try": 0, "Changed": 0}
+                resultDict[kind] = {"over voting": 0, "change voting": 0, "suc": 0, "failed": 0, "contented": 0}
             for k, value in dicti.items():
                 resultDict[kind][k] += value
-    total = len(election.issue.options)*len(election.agents)*rounds
+    #
+    # if(resultDict["RC"]["change voting"] > 0):
+    #     opList = []
+    #     for op in election.issue.options:
+    #         opList.append(op.coordinates)
+    #     agList = []
+    #     for ag in election.agents:
+    #         agList.append(ag.coordinates)
+    #     print(opList, agList)
+
+
+    total = len(election.agents)*rounds
+
     for kind, dicti in resultDict.items():
-        innerTotal = dicti["failed"] + dicti["Change voters"] + dicti["Over voters"] + dicti["didn't try"]
-        if(innerTotal != total):
-            print("total {} and innerTotal {} don't match in StatVotPosStats!".format(total, innerTotal))
-        totalAttemps = dicti["failed"] + dicti["Change voters"] + dicti["Over voters"]
+        innerTotal = dicti["failed"] + dicti["change voting"] + dicti["over voting"] + dicti["contented"]
+        # if(innerTotal != total):
+        #     print("total {} and innerTotal {} don't match in StatVotPosStats!".format(total, innerTotal))
+
+        if(not dicti["suc"] == dicti["change voting"] + dicti["over voting"]):
+            print("change + over is not suc")
+        totalAttemps = dicti["failed"] + dicti["change voting"] + dicti["over voting"]
         attemptRate = totalAttemps/total
         if(totalAttemps == 0):
             failed = 0
@@ -73,11 +97,54 @@ def stratVotPosStats(rounds=20):
             over = 0
         else:
             failed = dicti["failed"]/totalAttemps * 100
-            change = dicti["Change voters"]/totalAttemps * 100
-            over = dicti["Over voters"]/totalAttemps * 100
+            change = dicti["change voting"]/totalAttemps * 100
+            over = dicti["over voting"]/totalAttemps * 100
+            suc = dicti["suc"]/totalAttemps * 100
 
-        print("In {} unhappy voters failed {} %, succeded {} %,  overvoted {} % (total {}) and changevoted {} % (total {}) of the time. Attemptrate = {}. Nr of attemps: {}. There were {} changes.".format(kind, failed, 100 - failed, over, dicti["Over voters"], change, dicti["Change voters"], attemptRate, totalAttemps,dicti["Changed"] ))
 
+        # print("In {} {} agents did not use strat vote, {} did. {} were contendet.".format(kind, dicti["DidNot"], dicti["Did"], dicti["cont"]))
+        # print("In {} unhappy voters failed {} %, succeded {} %,  overvoted {} % (total {}) and changevoted {} % (total {}) of the time. Attemptrate = {}. Nr of attemps: {}. There were {} changes.".format(kind, failed, 100 - failed, over, dicti["over voting"], change, dicti["change voting"], attemptRate, totalAttemps,dicti["Changed"] ))
+        print("In {} unhappy voters failed {} %, succeded {} %,  overvoted {} % (total {}) and changevoted {} % (total {}) of the time. total of {} agent/elec pairs lead to total of {} attempts.".format(kind, failed, suc, over, dicti["over voting"], change, dicti["change voting"], totalAttemps+ dicti["contented"], totalAttemps))
+
+        fig, (ax1, ax2) = plt.subplots(1,2)
+        plt.suptitle(kindDict[kind])
+
+        colorDict = {"failed": '#2c5863', "contented": 'teal', "change voting": 'purple', "over voting": 'yellow'}
+        valueList = []
+        labels = []
+        colors = []
+        for name in ["failed", "contented", "change voting", "over voting"]:
+            if(dicti[name] != 0):
+                valueList.append(dicti[name])
+                labels.append(name)
+                colors.append(colorDict[name])
+
+        y = np.array(valueList)
+
+
+        ax1.pie(y, labels=labels, colors=colors, autopct='%1.1f%%', startangle=180, labeldistance=None, radius=1.4)
+
+
+
+
+        valueList2 = []
+        labels2 = []
+        colors2 = []
+        for name in ["failed", "change voting", "over voting"]:
+
+            if (dicti[name] != 0):
+                valueList2.append(dicti[name])
+                labels2.append(name)
+                colors2.append(colorDict[name])
+
+        y2 = np.array(valueList2)
+
+        ax2.pie(y2, labels=labels2, colors=colors2, autopct='%1.1f%%', startangle=180, labeldistance=None, radius=1.4)
+        ax1.legend(bbox_to_anchor=(0.5, 0))
+
+        plt.savefig("{}ComStratVote.png".format(kind), dpi=1000)
+
+        plt.show()
 
 
 
@@ -85,8 +152,10 @@ def stratVotPosStats(rounds=20):
 def computeStratVotPosForAll(election=None):
     if(election==None):
         election = initializeRandomElection(5, 4, 2)
+
     dicti= {}
-    for kind in ["WR", "WAR", "WAR2", "AV", "AV2", "PL", "RC"]:
+    # for kind in ["RC"]:
+    for kind in ["WR", "WAR", "AV", "PL", "RC"]:
         stratPos = computePossibilityStratVote(election, kind=kind)
         dicti[kind] = stratPos
         # print(kind, stratPos)
@@ -113,21 +182,28 @@ def computePossibilityStratVote(election: Election, kind: str):
     contendet = 0
     changedSomething = 0
 
+    agWhoDidNot = 0
+    agWhoDid = 0
+    agWhoCont = 0
+    over = 0
+    change = 0
+
     for ag in election.agents:
+        agDid = False
+        overVoting = False
         PM = ag.pm
         coordinates = ag.coordinates
         personalWinners = Helper.getWinner(PM)
         # if(any(win in winners for win in personalWinners)): # Agent is already happy with the result -> no strat vote necessary
         if(personalWinners == winners):
             contendet += len(election.issue.options)
+            # agWhoDidNot+=1
+            agWhoCont+=1
             continue
         else:
             for num, op in enumerate(election.issue.options):
-                if (isAV2 or isWAR2):
 
-                    ag.setNumApp(num + 1)
-                # if (kind == "WAR"):
-                #     ag.setNumApp(num + 1)
+
                 if(kind == "RC"):
                     fakePM = copy.deepcopy(PM)
                     fakePM[op.name] = 1
@@ -136,6 +212,10 @@ def computePossibilityStratVote(election: Election, kind: str):
                 else:
                     fakePM = Helper.getEmptyDict(list(PM.keys()))
                     fakePM[op.name] = 1
+                    if (isAV2 or isWAR2):
+                        for optionName in PM.keys():
+                            if (PM[optionName] >= PM[op.name]):
+                                fakePM[optionName] = 1
                     ag.setPM(fakePM) #The agent pretends to have this option as their prefered choice
                 newResult = election.computeBallotResult(kind)
                 newWinners = Helper.getWinner(newResult.normalizedRanking)
@@ -147,8 +227,10 @@ def computePossibilityStratVote(election: Election, kind: str):
                 #     sucOverVotes += 1
                 #     continue
                 if(resultImproved(PM, winners, newWinners)): #The Agent could improve their happiness with the result
+                    agDid = True
                     if(op.name in personalWinners):
                         sucOverVotes += 1
+                        overVoting = True
                     else:
                         sucChangeVotes +=1
                     continue
@@ -156,14 +238,27 @@ def computePossibilityStratVote(election: Election, kind: str):
             ag.setCoordinates(coordinates) #We set the agent to the old coordinates
             ag.setNumApp(None)
 
+            if(agDid):
+                agWhoDid+= 1
+                if(overVoting):
+                    over += 1
+                else:
+                    change += 1
+
+            else:
+                agWhoDidNot+=1
+    sumOfDid = agWhoDidNot + agWhoDid + agWhoCont
+
 
     sumOfLogged = sucOverVotes + sucChangeVotes + failedStratVotes + contendet
     sumOfTuples = len(election.agents)* len(election.issue.options)
 
     if(sumOfLogged!= sumOfTuples):
         print("The number of logged votes doesn't match.")
+    if (sumOfLogged != sumOfDid*len(election.issue.options)):
+        print("The number of logged votes doesn't match.")
 
-    return {"Over voters": sucOverVotes, "Change voters":  sucChangeVotes, "failed": failedStratVotes, "didn't try":contendet, "Changed": changedSomething}
+    return {"over voting": over, "change voting":  change, "suc": agWhoDid, "failed": agWhoDidNot, "contented":agWhoCont}
 
 
 

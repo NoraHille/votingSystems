@@ -144,7 +144,7 @@ class Agent(object):
         maxDist = math.sqrt(2*((2*dimensionSize)**2))
         for (op_name, pref) in pm.items():
             inverted_pref = (maxDist - pref)
-            pm[op_name] = inverted_pref
+            pm[op_name] = inverted_pref/maxDist
 
 
 
