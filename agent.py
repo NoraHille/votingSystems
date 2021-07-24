@@ -105,7 +105,7 @@ class Agent(object):
                 dist = 0.0000000001
             pref = dist
             pm[op.name] = pref;
-        #sumOfDist += dist;
+        sumOfDist += dist;
         # linearly invert
 
         sum_of_inv_preferences = 0

@@ -20,10 +20,6 @@ from exampleElections import make_small_Election_1, make_Election_1, make_strat_
 
 posDict = {0: -80, 1: -60, 2: -40, 3: -20, 4: 0, 5:20, 6:40, 7:60, 8:80}
 
-#TODO
-#Methode die für eine Wahl und ein System berechnet wie viele Agenten/Optionen Paare es gibt, die mit strategischem Wählen besser fahren als ohne
-# -> Diese Zahl als Bruchteil der (A,O) Paare insgesamt kann verglichen werden.
-# -> Jede der Zahlen mal die Glückssetigerung des A kann verglichen werden.
 
 
 
@@ -37,17 +33,16 @@ def method():
     print("HI")
     # generateStrategicChangeVoting(kind="RC", numOptions=5, numAgents=3, iter=1000)
 
-    stratVotPosStats(rounds=100000)
-
-
-
-
-
+    stratVotPosStats(rounds=10)
 
 
 
 
 def stratVotPosStats(rounds=20):
+
+    """This function is used to compute the percentage of agents that can use strategic voting in certain number of elections defined in rounds.
+
+    The output are pie charts that are stored in "{kindOfVotingSystem}ComStratVote.pdf" as well as a console text"""
 
 
     resultDict = {}
@@ -327,6 +322,10 @@ def resultImproved(PM: dict, oldW: dict, newW: dict):
 
 
 def generateStrategicChangeVoting(kind="WR", numOptions=5, numAgents=10, iter=10000):
+
+    """" This function finds an example Change Vote for the specified kind of Voting system, number of options and number of agents.
+    It will iteratively improve the effect the agent can achieve for iter iterations.
+    It will also print plots. """
     highestDifference = 0
     rounds = 0
     incNum = 0
@@ -433,6 +432,9 @@ def generateStrategicChangeVoting(kind="WR", numOptions=5, numAgents=10, iter=10
 
 
 def generateStrategicVoting(kind="WR", numOptions=5, numAgents=10, iter=10000):
+    """" This function finds an example Over Vote for the specified kind of Voting system, number of options and number of agents.
+        It will iteratively improve the effect the agent can achieve for iter iterations.
+        It will also print plots. """
     highestDifference = 0
     rounds = 0
     incNum = 0

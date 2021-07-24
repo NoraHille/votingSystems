@@ -135,6 +135,7 @@ def compare_different_pref_computations(numOp):
 
     el.make_result_graphic()
 
+
     print("distPM", el.agents[0].pm)
     # print("distPM WAR", el.agents[0].getBallot("WAR"))
     print("linPM", el.agents[0].linearPM)

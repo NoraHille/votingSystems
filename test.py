@@ -1,9 +1,9 @@
+
 from agentBlock import AgentBlock
 from classes import Option, Issue, Agent
-from Election import Election, initializeRandomElection, ElectionResult, makeElectionWithAgentBlocks
+from Election import Election, initializeRandomElection, ElectionResult, makeElectionWithAgentBlocks, makeElectionFromLists
 from Helper import Helper
-from strategicVoting import computePossibilityStratVote, getCoordinatesFromNum, getOtherAgentsNumForStratVote, calculateMiddlePosition
-from Evaluation import happinessOfAgentWithResult, happinessOfAgentWithWinner
+from incompleteKnowledgeStratVoting import makeBallotForChangeVote
 
 
 
@@ -26,123 +26,7 @@ class TestVotingResults(unittest.TestCase):
         self.assertEqual({'A':1.0, 'B':1.0}, el_result.ranking, "Should match")
         self.assertEqual({'A':0.5, 'B':0.5}, el_result.normalizedRanking, "Should match")
 
-    def test_Approval_Voting(self):
-        pass
-        # op1 = Option([1, 2])
-        # op2 = Option([-5, 8])
-        # op3 = Option([-4, 7])
-        #
-        # issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-        # ag1 = Agent([-4, 9], issue1)
-        # ag2 = Agent([-5, 7], issue1)
-        # ag3 = Agent([1, 2], issue1)
-        #
-        # election = Election(issue1, [ag1, ag2, ag3])
-        # el_result = election.computeBallotResult("AV")
-        #
-        # self.assertEqual({'A': 1.0, 'B': 2.0, 'C': 2.0}, el_result.ranking, "Should match")
-        # self.assertEqual({'A': 0.2, 'B': 0.4, 'C': 0.4}, el_result.normalizedRanking, "Should match")
 
-    def test_Weighted_Ranking(self):
-        op1 = Option([3, 2])
-        op2 = Option([6, 2])
-        op3 = Option([-3, 2])
-
-        issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-        ag1 = Agent([0, 2], issue1)
-        # ag2 = Agent([-5, 7], issue1)
-        # ag3 = Agent([1, 2], issue1)
-
-        election = Election(issue1, [ag1])
-        el_result = election.computeBallotResult("WR")
-
-        # self.assertEqual({'A': 2.0, 'B': 1.0, 'C': 2.0}, el_result.ranking, "Should match")
-        self.assertEqual({'A': 0.4, 'B': 0.2, 'C': 0.4}, el_result.normalizedRanking, "Should match")
-
-
-    def test_threeBythreeTest(self):
-        self.assertEqual(3, 3)
-
-    def test_computePossibilityStratVote(self):
-        op1 = Option([10, 20])
-        op2 = Option([-50, 80])
-        op3 = Option([50, -40])
-
-        issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-        ag1 = Agent([-60, 87], issue1)
-        ag2 = Agent([59, -47], issue1)
-        ag3 = Agent([-62, 79], issue1)
-
-        middle_ag_low = Agent([-10, -10], issue1)
-        middle_ag_high = Agent([-10, 30], issue1)
-
-        election = Election(issue1, [ag1, ag2, ag3, middle_ag_low])
-        self.assertEqual([0,2,4,6], list(computePossibilityStratVote(election, "PL").values()))
-
-        election2 = Election(issue1, [ag1, ag2, ag3, middle_ag_high])
-        self.assertEqual([0, 1, 5, 6], list(computePossibilityStratVote(election2, "PL").values()))
-
-    def test_Over_voters(self):
-        op1 = Option([50, 80])
-        op2 = Option([-50, 80])
-
-        issue1 = Issue([op1, op2], ["freedom", "taxes"])
-
-        ag1 = Agent([1, 80], issue1)
-        ag2 = Agent([50, 80], issue1)
-        ag3 = Agent([-50, 80], issue1)
-        ag4 = Agent([-5, 80], issue1)
-
-        election = Election(issue1, [ag1, ag2, ag3, ag4])
-        self.assertEqual([1, 0, 3, 4], list(computePossibilityStratVote(election, "WR").values()))
-        self.assertEqual([0, 0, 0, 8], list(computePossibilityStratVote(election, "PL").values()))
-
-    def test_happinessOfAgentWithResult(self):
-        op1 = Option([50, 80])
-        op2 = Option([-50, 80])
-
-        issue1 = Issue([op1, op2], ["freedom", "taxes"])
-
-        ag = Agent([0, 80], issue1)
-        election = Election(issue1, [ag])
-        result = election.computeBallotResult("WR")
-        self.assertEqual(0.5, happinessOfAgentWithResult(ag, result))
-
-        ag1 = Agent([75, 80], issue1)
-        election = Election(issue1, [ag, ag1])
-        result1 = election.computeBallotResult("WR")
-        self.assertEqual(0.5, round(happinessOfAgentWithResult(ag, result1), 3))
-        self.assertEqual(0.611, round(happinessOfAgentWithResult(ag1, result1), 3))
-
-        ag2 = Agent([-40, 80], issue1)
-        election = Election(issue1, [ag, ag1, ag2])
-        result2 = election.computeBallotResult("WR")
-        self.assertEqual(0.5, round(happinessOfAgentWithResult(ag, result2), 3))
-        self.assertEqual(0.485, round(happinessOfAgentWithResult(ag1, result2), 3))
-        self.assertEqual(0.518, round(happinessOfAgentWithResult(ag2, result2), 3))
-
-        ag3 = Agent([10, 80], issue1)
-        election = Election(issue1, [ag, ag1, ag2, ag3])
-        result3 = election.computeBallotResult("WR")
-        self.assertEqual(0.502, round(happinessOfAgentWithResult(ag3, result3), 3))
-
-    def test_happinessOfAgentWithWinner(self):
-        op1 = Option([50, 80])
-        op2 = Option([-50, 80])
-
-        issue1 = Issue([op1, op2], ["freedom", "taxes"])
-        ag = Agent([-25, 80], issue1)
-        ag1 = Agent([-45, 80], issue1)
-        ag2 = Agent([-45, 80], issue1)
-        ag3 = Agent([-45, 80], issue1)
-
-        election = Election(issue1, [ag, ag1, ag2, ag3])
-        result = election.computeBallotResult("PL")
-        result2 = election.computeBallotResult("PL")
-
-
-        self.assertEqual(0.75, happinessOfAgentWithWinner(ag, result))
-        self.assertEqual(0.75, happinessOfAgentWithWinner(ag, result2))
 
     def test_getEmptyDict(self):
         op1 = Option([50, 80])
@@ -153,24 +37,6 @@ class TestVotingResults(unittest.TestCase):
         self.assertEqual({"A":0, "B":0}, Helper.getEmptyDict(list(ag.pm.keys())))
 
 
-    def test_RC_and_AV(self):
-        op1 = Option([-70, 50])  # X A
-        op2 = Option([70, 50])  # Z B
-        op3 = Option([0, -50])  # Y C
-
-        issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-
-        agents = []
-
-        for i in range(45):
-            agents.append(Agent([-62, 40], issue1))  # (A,C)
-        for i in range(35):
-            agents.append(Agent([10, -40], issue1))  # (C,B)
-        for i in range(20):
-            agents.append(Agent([10, 50], issue1))  # (B,A)
-        election = Election(issue1, agents)
-        self.assertEqual([0.65, 0.0, 0.35], [round(v,2) for (k,v) in election.computeBallotResult("RC").normalizedRanking.items()])
-        self.assertEqual([0.45, 0.2, 0.35], [round(v,2) for (k,v) in election.computeBallotResult("AV", ).normalizedRanking.items()])
 
     def test_RC_and_AV_2(self):
         op1 = Option([34, 67])  # X A
@@ -245,23 +111,6 @@ class TestVotingResults(unittest.TestCase):
         self.assertEqual(['A', 'B'], election.getOptionNameList())
 
 
-    def test_getCoordinatesFromNum(self):
-        self.assertEqual(getCoordinatesFromNum(0), [-80, -80])
-        self.assertEqual(getCoordinatesFromNum(80), [80, 80])
-        self.assertEqual(getCoordinatesFromNum(40), [0, 0])
-
-    def test_getOtherAgentsForStratVote(self):
-        self.assertEqual(getOtherAgentsNumForStratVote(0), [0,0,0])
-        self.assertEqual(getOtherAgentsNumForStratVote(531440), [80,80,80])
-        self.assertEqual(getOtherAgentsNumForStratVote(81), [0,1,0])
-        self.assertEqual(getOtherAgentsNumForStratVote(6560), [80,80,0])
-        self.assertEqual(getOtherAgentsNumForStratVote(6561), [0,0,1])
-
-    def test_calculateMiddlePosition(self):
-
-        self.assertEqual(calculateMiddlePosition([50, 50], [40, 40]), [45, 45])
-        self.assertEqual(calculateMiddlePosition([-50, 50], [40, 40]), [-5, 45])
-
     def test_agentBlock(self):
         op1 = Option([-70, 80])  # A
         op2 = Option([70, 80])  # B
@@ -282,71 +131,42 @@ class TestVotingResults(unittest.TestCase):
         self.assertEqual(['A'], winner2)
 
 
-    def test_AppNum_in_WAR(self):
-        op1 = Option([-50, 80])  # A
-        op2 = Option([70, 80])  # B
-        op3 = Option([20, -20])  # C
+
+    def test_WAR_ballot(self):
+        op1 = Option([1, 2])
+        op2 = Option([-5, 8])
+
+        issue1 = Issue([op1, op2], ["freedom", "taxes"])
+        ag1 = Agent([-50, 80], issue1)
+
+
+        warBallot = ag1.getWeightedApprovalBallot()
+
+        self.assertEqual(1, warBallot[Helper.getWinner(warBallot)[0]])
+        self.assertEqual(1, sum(list(ag1.pm.values())))
+
+
+
+    def test_is_dist_uneffected_by_scale(self):
+        el = makeElectionFromLists([[10,30], [70, 50], [80, -20]], [[80, 40], [90,20], [20, -60]])
+        smallEl = makeElectionFromLists([[1,3], [7, 5], [8, -2]], [[8, 4], [9,2], [2, -6]])
+        self.assertNotEqual(el.computeBallotResult("WR").normalizedRanking, smallEl.computeBallotResult("WR").normalizedRanking)
+
+    def test_makeBallotForChangeVote(self):
+        op1 = Option([1, 2])
+        op2 = Option([-50, 80])
+        op3 = Option([-40, 70])
 
         issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-        agent = Agent([0,0], issue1)
+        ag1 = Agent([-50, 80], issue1)
 
-        initBallot = agent.getWeightedApprovalBallot()
+        ballot = makeBallotForChangeVote(ag1, op3.name, kind="WAR")
 
-        agent.setNumApp(-2)
+        self.assertEqual(list(ballot.values()), [0,1,1])
 
-        newBallot = agent.getWeightedApprovalBallot()
+        ballot = makeBallotForChangeVote(ag1, op3.name, kind="WR")
 
-        self.assertEqual(list(newBallot.values()), [0,0,1])
-
-        agent.setNumApp(-1)
-
-        newBallot = agent.getWeightedApprovalBallot()
-
-        self.assertEqual(list(newBallot.values()), [initBallot['A'], 0, 1])
-
-        agent.setNumApp(3)
-
-        newBallot = agent.getWeightedApprovalBallot()
-
-        self.assertEqual(list(newBallot.values()), [1, 1, 1])
-
-        agent.setNumApp(2)
-
-        newBallot = agent.getWeightedApprovalBallot()
-
-        self.assertEqual(list(newBallot.values()), [1, initBallot['B'], 1])
-
-        agent.setNumApp(0)
-
-        newBallot = agent.getWeightedApprovalBallot()
-
-        self.assertEqual(list(newBallot.values()), list(initBallot.values()))
-
-
-    def test_dist_pm(self):
-        op1 = Option([-70, 80])  # A
-        op2 = Option([70, 80])  # B
-        op3 = Option([20, -80])  # C
-        op4 = Option([50, -80])  # D
-
-        issue1 = Issue([op1, op2, op3, op4], ["freedom", "taxes"])
-        agent = Agent([50, -80], issue1)
-
-        distPM = agent.distPM
-
-
-
-        op1 = Option([-70, 80])  # A
-        op2 = Option([70, 80])  # B
-        op3 = Option([20, -80])  # C
-
-        issue1 = Issue([op1, op2, op3], ["freedom", "taxes"])
-        agent = Agent([50, -80], issue1)
-
-        distPM2 = agent.distPM
-
-        self.assertEqual([distPM[op] for op in ["A", "B", "C"]], [distPM2[op] for op in ["A", "B", "C"]])
-
+        self.assertEqual(list(ballot.values()), [0, 0, 1])
 
 
 
