@@ -52,6 +52,8 @@ class Election:
             print("You tried to plot an election with more/less than 2 dimensions, namely ", len(self.issue.dimensions))
             return
 
+        ax = plt.gca()
+
         ag_x = []
         ag_y = []
         agentCat = []
@@ -66,7 +68,7 @@ class Election:
             ag_y.append(ag.coordinates[1])
 
         if (not colorPlurality and not colorWeighted):
-            plt.scatter(ag_x, ag_y)
+            plt.scatter(ag_x, ag_y, c="black")
         else:
             if (colorPlurality):
                 plt.scatter(ag_x, ag_y, s=10, c=colormap[agentCat])
@@ -140,9 +142,11 @@ class Election:
         optionCat = np.array(range(len(self.issue.options)))
 
         if (not colorPlurality and not colorWeighted):
-            plt.scatter(op_x, op_y, color="red")
+            plt.scatter(op_x, op_y, marker='D',edgecolors='black', s=100,color="orange")
+            # pass
         else:
             plt.scatter(op_x, op_y, marker='D',edgecolors='black', s=200, c=colormap[optionCat])
+        ax.set_aspect('equal')
 
 
 
@@ -159,21 +163,21 @@ class Election:
             mc = self.computeMiddleCoordOfAgents()
             x = mc[0]
             y = mc[1]
-            plt.scatter(x, y, s=40, color="black")
+            plt.scatter(x, y, s=40, color="red")
 
-            mc, points = self.computeGraphicWithOutlierPunishing(retPoints=True)
-            x = mc[0]
-            y = mc[1]
-            plt.scatter(x, y, s=20, color="gray")
-            for p in points:
-                plt.scatter(p[0], p[1], s=10, color="red")
+            # mc, points = self.computeGraphicWithOutlierPunishing(retPoints=True)
+            # x = mc[0]
+            # y = mc[1]
+            # plt.scatter(x, y, s=20, color="gray")
+            # for p in points:
+            #     plt.scatter(p[0], p[1], s=10, color="red")
 
             mc, points = self.computeGraphicWithOutlierPunishingCircle(retPoints=True)
             x = mc[0]
             y = mc[1]
-            plt.scatter(x, y, s=20, color="darkgreen")
+            plt.scatter(x, y, s=40, color="green")
             for p in points:
-                plt.scatter(p[0], p[1], s=10, color="green")
+                plt.scatter(p[0], p[1], s=10, color="darkgreen")
 
         for i, txt in enumerate(op_names):
             plt.annotate(txt, xy=(op_x[i], op_y[i]), xytext=(op_x[i]-2*scale, op_y[i]-2*scale))
@@ -181,6 +185,7 @@ class Election:
         plt.xlim([-dimensionSize, dimensionSize])
         plt.ylim([-dimensionSize, dimensionSize])
 
+        plt.savefig("graphSolExample.pdf".format(int(time())), dpi=1000)
         # plt.savefig("elecPlot{}.png".format(int(time())), dpi=300)
 
         if (show):

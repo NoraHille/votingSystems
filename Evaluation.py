@@ -165,7 +165,7 @@ def make_tie_normalized_Qulaity_table(numOptions, numAgents, numDim, numElec= 1,
     tieHapp = {}
     for eval in happiness.keys():
         tieHapp[eval] = happiness[eval][0]
-        print(eval, happiness[eval][0])
+        # print(eval, happiness[eval][0])
 
     for eval in eval_list:
         if (tieHapp[eval] == 0):
@@ -214,7 +214,7 @@ def make_tie_normalized_Var_table(numOptions, numAgents, numDim, numElec= 1, ax 
     tieVar= {}
     for eval in variance.keys():
         tieVar[eval] = variance[eval][0]
-        print(eval, variance[eval][0])
+        # print(eval, variance[eval][0])
 
     for eval in eval_list:
         if (tieVar[eval] == 0):
@@ -365,8 +365,8 @@ def computeVarianceOfHappiness(election: Election, result: ElectionResult, kind=
             variance += (rootDistanceOfAgentToResult(agent, result, linear=linear) - mu) ** 2
         if (kind == "distw"):
             variance += (distanceOfAgentToWinner(agent, result, linear=linear) - mu) ** 2
-    if(kind=="hw"):
-        print(variance)
+    # if(kind=="hw"):
+        # print(variance)
 
     return variance/agentNum
 
@@ -439,7 +439,7 @@ def rootDistanceOfAgentToResult(agent: Agent, result: ElectionResult, linear=Fal
     distance = 0
     for op_name in PM.keys():
         distance += (abs(PM[op_name]-result.normalizedRanking[op_name]))**0.5
-    print(distance)
+    # print(distance)
     return distance
 
 def squaredDistanceOfAgentToResult(agent: Agent, result: ElectionResult, linear=False)-> float:
@@ -449,7 +449,7 @@ def squaredDistanceOfAgentToResult(agent: Agent, result: ElectionResult, linear=
     distance = 0
     for op_name in PM.keys():
         distance += (PM[op_name]-result.normalizedRanking[op_name])**2
-    print(distance)
+    # print(distance)
 
     return distance
 

@@ -25,7 +25,7 @@ posDict = {0: -80, 1: -60, 2: -40, 3: -20, 4: 0, 5:20, 6:40, 7:60, 8:80}
 def method():
     print("HI")
 
-    StatOnIncomKnowStratVote(1000)
+    StatOnIncomKnowStratVote(10000)
 
 
 # This method runs through a bunch of elections and sees if there is the possibilty to do strat vote within the coord system. If there isn't it sees if that changed when we allow any ballot.

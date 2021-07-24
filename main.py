@@ -33,9 +33,14 @@ def method():
     #                                   [-42.42574211692567, 15.116941213589044], [-27.846394001983256, -82.782698929622],
     #                                   [-43.95824535122448, -11.704865168128364]])
 
-    election = makeElectionFromLists([[68.11781073164752, -54.69841632513515], [79.27224626379342, -10.658832537058032], [-66.70579514750838, 93.74159928392103], [85.36793199486385, -42.665959458672]], [[-48.87222697379694, 46.293515643470414], [56.26047080651105, 2.6110771617346558], [63.64427320684868, 56.04820599316707]])
+    # election = makeElectionFromLists([[68.11781073164752, -54.69841632513515], [79.27224626379342, -10.658832537058032], [-66.70579514750838, 93.74159928392103], [85.36793199486385, -42.665959458672]], [[-48.87222697379694, 46.293515643470414], [56.26047080651105, 2.6110771617346558], [63.64427320684868, 56.04820599316707]])
+    #
+    # election.print_election_plot(colorPlurality=True)
 
-    election.print_election_plot(colorPlurality=True)
+    plotAConclusionGraphic()
+
+    # election = make_Election_With_Extremes()
+    # election.print_election_plot(printMiddle=True)
 
 
 
@@ -88,6 +93,43 @@ def method():
 #         agents.append(Agent([10, -40], issue1)) #(C,B)
 #     for i in range(2): #(20):
 #         agents.append(Agent([10, 50], issue1)) #(B,A)
+
+def plotAConclusionGraphic():
+
+    labels = ["Plurality", "Approval", "Ranked Choice", "Weighted", "Weighted Approval"]
+    # happiness = [50, 78, 65, 89, 95]
+    happiness = [0.49, 0.78, 0.68, 0.89, 0.95]
+    practicability = [0.78906, 0.62159, 0.85542,  0.0514, 0.20354]
+
+    fig = plt.figure()
+
+    ax = plt.gca()
+    ax.set_aspect("equal")
+
+    plt.xlabel('quality & equality', fontsize=16)
+    plt.ylabel('practicability', fontsize=16)
+
+    plt.scatter(happiness, practicability, marker='+',edgecolors='black', color="black", s=20)
+    for num, (x, y)in enumerate(zip(happiness, practicability)):
+        label = labels[num]
+
+        plt.annotate(label,  # this is the text
+                     (x, y),  # these are the coordinates to position the label
+                     textcoords="offset points",  # how to position the text
+                     xytext=(0, 10),  # distance from text to points (x,y)
+                     ha='center')
+    # plt.xlim([0.4 , 1.05])
+    # plt.ylim([0, 1])
+
+    plt.xlim([0, 1.19])
+    plt.ylim([0, 1.0])
+
+    plt.savefig("conclusionPlotSquare.pdf", dpi= 1000)
+
+    plt.show()
+
+
+
 def compare_different_pref_computations(numOp):
     el = initializeRandomElection(4, 100, 2)
 

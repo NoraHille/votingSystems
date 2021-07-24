@@ -1,4 +1,4 @@
-
+import itertools
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,7 +37,7 @@ def method():
     print("HI")
     # generateStrategicChangeVoting(kind="RC", numOptions=5, numAgents=3, iter=1000)
 
-    stratVotPosStats(rounds=1)
+    stratVotPosStats(rounds=100000)
 
 
 
@@ -107,7 +107,7 @@ def stratVotPosStats(rounds=20):
         print("In {} unhappy voters failed {} %, succeded {} %,  overvoted {} % (total {}) and changevoted {} % (total {}) of the time. total of {} agent/elec pairs lead to total of {} attempts.".format(kind, failed, suc, over, dicti["over voting"], change, dicti["change voting"], totalAttemps+ dicti["contented"], totalAttemps))
 
         fig, (ax1, ax2) = plt.subplots(1,2)
-        plt.suptitle(kindDict[kind])
+        plt.suptitle(kindDict[kind], fontsize=30, y=0.9)
 
         colorDict = {"failed": '#2c5863', "contented": 'teal', "change voting": 'purple', "over voting": 'yellow'}
         valueList = []
@@ -122,8 +122,7 @@ def stratVotPosStats(rounds=20):
         y = np.array(valueList)
 
 
-        ax1.pie(y, labels=labels, colors=colors, autopct='%1.1f%%', startangle=180, labeldistance=None, radius=1.4)
-
+        ax1.pie(y, labels=labels, colors=colors, autopct='%1.1f%%', startangle=180, labeldistance=None, radius=1.4, textprops={'fontsize': 14})
 
 
 
@@ -139,10 +138,10 @@ def stratVotPosStats(rounds=20):
 
         y2 = np.array(valueList2)
 
-        ax2.pie(y2, labels=labels2, colors=colors2, autopct='%1.1f%%', startangle=180, labeldistance=None, radius=1.4)
-        ax1.legend(bbox_to_anchor=(0.5, 0))
+        ax2.pie(y2, labels=labels2, colors=colors2, autopct='%1.1f%%', startangle=180, labeldistance=None, radius=1.4, textprops={'fontsize': 14})
+        ax1.legend(bbox_to_anchor=(0.7, 0), prop={"size":12})
 
-        plt.savefig("{}ComStratVote.png".format(kind), dpi=1000)
+        plt.savefig("{}ComStratVote.pdf".format(kind), dpi=1000)
 
         plt.show()
 
@@ -196,20 +195,54 @@ def computePossibilityStratVote(election: Election, kind: str):
         personalWinners = Helper.getWinner(PM)
         # if(any(win in winners for win in personalWinners)): # Agent is already happy with the result -> no strat vote necessary
         if(personalWinners == winners):
-            contendet += len(election.issue.options)
+            iterationsPerAgent = len(election.issue.options)
+            if(kind=="RC"):
+                iterationsPerAgent = math.factorial(len(election.issue.options))
+            contendet += iterationsPerAgent
             # agWhoDidNot+=1
             agWhoCont+=1
             continue
         else:
-            for num, op in enumerate(election.issue.options):
+
+            if(kind == "RC"):
+
+                permutations_object = itertools.permutations([op.name for op in election.issue.options])
+
+                permutations_list = list(permutations_object)
+
+                for permut in permutations_list:
+
+                    fakePM = Helper.getEmptyDict(list(PM.keys()))
+                    for num, opName in enumerate(permut):
+                        fakePM[opName] = 1/(num+1)
+                    ag.setPM(fakePM)  # The agent pretends to have the options in that specific order
+
+                    newResult = election.computeBallotResult(kind)
+                    newWinners = Helper.getWinner(newResult.normalizedRanking)
+                    # if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
+                    # if (op.name in newWinners and op.name not in winners):
+                    #     changedSomething += 1
+
+                    # if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
+                    #     sucOverVotes += 1
+                    #     continue
+                    if (
+                    resultImproved(PM, winners, newWinners)):  # The Agent could improve their happiness with the result
+                        agDid = True
+                        if (any((win in newWinners and win not in winners) for win in personalWinners)):
+                            sucOverVotes += 1
+                            overVoting = True
+                        else:
+                            sucChangeVotes += 1
+                        continue
+                    failedStratVotes += 1  # The Agent could not improve the result of the vote through strat voting
 
 
-                if(kind == "RC"):
-                    fakePM = copy.deepcopy(PM)
-                    fakePM[op.name] = 1
-                    ag.setPM(fakePM)  # The agent pretends to have this option as their prefered choice
+            else: #kind is not RC
 
-                else:
+
+                for num, op in enumerate(election.issue.options):
+
                     fakePM = Helper.getEmptyDict(list(PM.keys()))
                     fakePM[op.name] = 1
                     if (isAV2 or isWAR2):
@@ -217,24 +250,24 @@ def computePossibilityStratVote(election: Election, kind: str):
                             if (PM[optionName] >= PM[op.name]):
                                 fakePM[optionName] = 1
                     ag.setPM(fakePM) #The agent pretends to have this option as their prefered choice
-                newResult = election.computeBallotResult(kind)
-                newWinners = Helper.getWinner(newResult.normalizedRanking)
-                # if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
-                if(op.name in newWinners and op.name not in winners):
-                    changedSomething += 1
+                    newResult = election.computeBallotResult(kind)
+                    newWinners = Helper.getWinner(newResult.normalizedRanking)
+                    # if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
+                    if(op.name in newWinners and op.name not in winners):
+                        changedSomething += 1
 
-                # if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
-                #     sucOverVotes += 1
-                #     continue
-                if(resultImproved(PM, winners, newWinners)): #The Agent could improve their happiness with the result
-                    agDid = True
-                    if(op.name in personalWinners):
-                        sucOverVotes += 1
-                        overVoting = True
-                    else:
-                        sucChangeVotes +=1
-                    continue
-                failedStratVotes +=1 #The Agent could not improve the result of the vote through strat voting
+                    # if (any(win in newWinners for win in personalWinners)): # The Agent successfully changed the outcome of the vote to one of their favorites
+                    #     sucOverVotes += 1
+                    #     continue
+                    if(resultImproved(PM, winners, newWinners)): #The Agent could improve their happiness with the result
+                        agDid = True
+                        if(op.name in personalWinners):
+                            sucOverVotes += 1
+                            overVoting = True
+                        else:
+                            sucChangeVotes +=1
+                        continue
+                    failedStratVotes +=1 #The Agent could not improve the result of the vote through strat voting
             ag.setCoordinates(coordinates) #We set the agent to the old coordinates
             ag.setNumApp(None)
 
@@ -251,12 +284,21 @@ def computePossibilityStratVote(election: Election, kind: str):
 
 
     sumOfLogged = sucOverVotes + sucChangeVotes + failedStratVotes + contendet
-    sumOfTuples = len(election.agents)* len(election.issue.options)
 
-    if(sumOfLogged!= sumOfTuples):
-        print("The number of logged votes doesn't match.")
-    if (sumOfLogged != sumOfDid*len(election.issue.options)):
-        print("The number of logged votes doesn't match.")
+
+
+    sumOfTuples = len(election.agents)* len(election.issue.options)
+    if (kind == "RC"):
+        sumOfTuples = len(election.agents) * math.factorial(len(election.issue.options))
+
+
+
+
+    if (sumOfLogged != sumOfTuples):
+        print("The number of logged votes doesn't match the iterations.")
+
+    if (len(election.agents)!= sumOfDid):
+        print("The number of logged votes doesn't match the number of agents.")
 
     return {"over voting": over, "change voting":  change, "suc": agWhoDid, "failed": agWhoDidNot, "contented":agWhoCont}
 
