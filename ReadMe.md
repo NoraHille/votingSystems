@@ -1,15 +1,14 @@
 #Introduction 
 
-In this project we can simulate elections and apply specific evaluation techniques to them. We can measure how good the result of the election through utilizing data about the happiness it leads to. 
+In this project we can simulate elections, evaluate them with different voting systems and apply specific techniques to them that compare the quality, equality and practicability of the voting systems. Concretely we measure how good (quality and equality) the result of the election is through utilizing data about the happiness it leads to. We can also generate examples for strategic voting, measure how often agents can vote strategically and test how agents behave when they do not have complete information about the vote. 
 
 
 #Functionality
 
-
 ##Elections 
 
 In this project we can simulate elections, by defining agents (the voters) as well as options (the alternatives e.g. parties).
-We start by defining an issue that has d different dimensions. Than we consider each agent and each options as a point within that d dimenional space. To create an election we now only need an issue as well as a list of options and agents. 
+We start by defining an issue that has d different dimensions. Then we consider each agent and each options as a point within that d dimenional space. To create an election we now only need an issue as well as a list of options and agents. 
 
 The class Election.py holds all the relevant data for the elections. 
 In the file exampleElections.py you can find functions that return certain previously defined elections, with specific attributes. 
@@ -59,7 +58,7 @@ In strategicVoting.py we have two major functionalities:
 With generateStrategicVoting() and generateStrategicChangeVoting() we can generate example elections where agents can manipulate the vote by changing their position in the grid. 
 We also get a graphic visualizing this effect (they can be made using makeStratVotingPlot()).
 
-###Tally Strategiv Votes 
+###Tally Strategic Votes 
 
 stratVotPosStats() considers a specified number of elections and returns the percentage of agents that could use over voting, change voting or failed at strategic voting despite trying. The results are visualized in two pie plots (one with agents that were contented one without) per voting system. 
 
